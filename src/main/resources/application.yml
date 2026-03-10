@@ -1,0 +1,47 @@
+spring:
+  application:
+    name: football-booking-system
+  profiles:
+    active: dev
+
+jwt:
+  secret: ZmQ0ZDExNjIzMDUyMGRmOTBhZjQ1MmQ1MmQ3ZWYwOGIyMWYyNjNiZDQ0NWJiZTRkMzY0YzQxN2E4MzUzYmYwMQ==
+  expiration: 86400000  # 24 часа в миллисекундах
+
+---
+# Dev Profile (H2 Database)
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:h2:mem:footballdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+
+---
+# Production Profile (PostgreSQL)
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: jdbc:postgresql://localhost:5432/footballdb
+    driver-class-name: org.postgresql.Driver
+    username: postgres
+    password: postgres
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
