@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Бронирование — Football Booking</title>
+    <title>Бронирование — Площадка</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="/css/style.css" rel="stylesheet">
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container">
-        <a class="navbar-brand" href="/"><i class="bi bi-dribbble"></i> Football Booking</a>
+        <a class="navbar-brand" href="/"><span class="brand-icon">⚽</span> Площадка</a>
         <div class="collapse navbar-collapse">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item"><a class="nav-link" href="/">Поля</a></li>
@@ -22,34 +23,28 @@
     </div>
 </nav>
 
-<div class="container mt-4">
+<div class="container content-wrapper">
     <div class="row">
-        <!-- Field info -->
         <div class="col-md-5 mb-4">
             <div class="card">
+                <div class="card-img-top-placeholder" style="height:8px;background:linear-gradient(90deg,var(--pitch-green),var(--pitch-light));"></div>
                 <div class="card-body" id="field-info">
-                    <div class="text-center py-4">
-                        <div class="spinner-border text-success"></div>
-                    </div>
+                    <div class="text-center py-4"><div class="spinner-border text-success"></div></div>
                 </div>
             </div>
-
-            <!-- Existing bookings for this field -->
             <div class="card mt-3">
                 <div class="card-body">
-                    <h6><i class="bi bi-calendar-check"></i> Занятое время</h6>
-                    <div id="existing-bookings">
+                    <h6 class="section-title" style="font-size:0.95rem;"><i class="bi bi-clock-history"></i> Занятое время</h6>
+                    <div id="existing-bookings" class="mt-3">
                         <p class="text-muted small">Загрузка...</p>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Booking form -->
         <div class="col-md-7">
             <div class="card">
-                <div class="card-body p-4">
-                    <h4 class="mb-3"><i class="bi bi-calendar-plus"></i> Забронировать поле</h4>
+                <div class="card-body" style="padding:2rem;">
+                    <h4 class="section-title mb-4">Забронировать поле</h4>
                     <div id="alert-container"></div>
                     <form id="booking-form">
                         <div class="mb-3">
@@ -60,12 +55,12 @@
                             <label for="endTime" class="form-label">Окончание</label>
                             <input type="datetime-local" class="form-control" id="endTime" required>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Расчётная стоимость</label>
-                            <p class="price-tag" id="estimated-price">—</p>
+                        <div class="mb-4 p-3" style="background:var(--pitch-pale);border-radius:var(--radius-sm);">
+                            <label class="form-label mb-1">Расчётная стоимость</label>
+                            <p class="price-tag mb-0" id="estimated-price">—</p>
                         </div>
-                        <button type="submit" class="btn btn-book w-100" id="btn-submit">
-                            <i class="bi bi-check-circle"></i> Забронировать
+                        <button type="submit" class="btn btn-book w-100">
+                            <i class="bi bi-check-circle"></i> Подтвердить бронирование
                         </button>
                     </form>
                 </div>
@@ -74,9 +69,7 @@
     </div>
 </div>
 
-<footer>
-    <div class="container">Football Booking System &copy; 2026</div>
-</footer>
+<footer><div class="container">Площадка &copy; 2026 — Бронирование футбольных полей</div></footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/js/api.js"></script>
@@ -85,100 +78,74 @@
     const fieldId = params.get('id');
     let fieldData = null;
 
-    if (!fieldId) {
-        window.location.href = '/';
-    }
+    if (!fieldId) window.location.href = '/';
+    if (!isLoggedIn()) window.location.href = '/login.html';
 
-    if (!isLoggedIn()) {
-        window.location.href = '/login.html';
-    }
-
-    // Load field info
     async function loadField() {
         try {
             const resp = await fetch(API_BASE + '/fields/' + fieldId);
             if (!resp.ok) throw new Error();
             fieldData = await resp.json();
-
             document.getElementById('field-info').innerHTML = `
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <h5 class="mb-0">${fieldData.name}</h5>
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h5 class="card-title mb-0">${fieldData.name}</h5>
                     <span class="field-type-badge ${fieldData.fieldType === 'INDOOR' ? 'indoor' : 'outdoor'}">
                         ${fieldTypeLabel(fieldData.fieldType)}
                     </span>
                 </div>
-                <p class="text-muted mb-1"><i class="bi bi-geo-alt"></i> ${fieldData.address}</p>
-                <p>${fieldData.description || ''}</p>
-                <p class="price-tag mb-0">${formatPrice(fieldData.pricePerHour)}/час</p>
+                <p class="text-muted mb-1"><i class="bi bi-geo-alt-fill"></i> ${fieldData.address}</p>
+                <p class="owner-tag mb-2"><i class="bi bi-person-fill"></i> ${fieldData.ownerUsername || ''}</p>
+                <p class="mb-3">${fieldData.description || ''}</p>
+                <p class="price-tag mb-0">${formatPrice(fieldData.pricePerHour)}<small style="font-size:0.6em;font-weight:400;opacity:0.7">/час</small></p>
             `;
-        } catch {
-            document.getElementById('field-info').innerHTML = '<div class="alert alert-danger">Поле не найдено</div>';
-        }
+        } catch { document.getElementById('field-info').innerHTML = '<div class="alert alert-danger">Поле не найдено</div>'; }
     }
 
-    // Load existing bookings
     async function loadBookings() {
         try {
             const resp = await fetch(API_BASE + '/bookings/field/' + fieldId);
             if (!resp.ok) throw new Error();
             const bookings = await resp.json();
-
             const active = bookings.filter(b => b.status !== 'CANCELLED');
             const container = document.getElementById('existing-bookings');
-
             if (active.length === 0) {
-                container.innerHTML = '<p class="text-muted small mb-0">Нет бронирований — всё свободно</p>';
+                container.innerHTML = '<p class="text-muted small mb-0">Свободно — нет бронирований</p>';
             } else {
                 container.innerHTML = '<ul class="list-group list-group-flush">' +
-                    active.map(b => `
-                        <li class="list-group-item px-0 py-1 small">
-                            <i class="bi bi-clock"></i> ${formatDateTime(b.startTime)} — ${formatDateTime(b.endTime)}
-                        </li>
-                    `).join('') + '</ul>';
+                    active.map(b => `<li class="list-group-item px-0 py-2 small border-0" style="border-bottom:1px solid var(--border-light)!important;">
+                        <i class="bi bi-clock" style="color:var(--pitch-green);"></i> ${formatDateTime(b.startTime)} — ${formatDateTime(b.endTime)}
+                    </li>`).join('') + '</ul>';
             }
-        } catch {
-            document.getElementById('existing-bookings').innerHTML = '';
-        }
+        } catch { document.getElementById('existing-bookings').innerHTML = ''; }
     }
 
-    // Calculate price
     function updatePrice() {
         const start = document.getElementById('startTime').value;
         const end = document.getElementById('endTime').value;
         if (start && end && fieldData) {
             const hours = (new Date(end) - new Date(start)) / 3600000;
             if (hours > 0) {
-                const price = hours * fieldData.pricePerHour;
-                document.getElementById('estimated-price').textContent = formatPrice(price.toFixed(2));
-            } else {
-                document.getElementById('estimated-price').textContent = '—';
-            }
+                document.getElementById('estimated-price').textContent = formatPrice((hours * fieldData.pricePerHour).toFixed(2));
+            } else { document.getElementById('estimated-price').textContent = '—'; }
         }
     }
 
     document.getElementById('startTime').addEventListener('change', updatePrice);
     document.getElementById('endTime').addEventListener('change', updatePrice);
 
-    // Submit booking
     document.getElementById('booking-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const alertContainer = document.getElementById('alert-container');
         alertContainer.innerHTML = '';
-
         const body = {
             fieldId: parseInt(fieldId),
             startTime: document.getElementById('startTime').value + ':00',
             endTime: document.getElementById('endTime').value + ':00'
         };
-
         try {
-            const resp = await apiFetch('/bookings', {
-                method: 'POST',
-                body: JSON.stringify(body)
-            });
-
+            const resp = await apiFetch('/bookings', { method: 'POST', body: JSON.stringify(body) });
             if (resp.ok) {
-                alertContainer.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle"></i> Бронирование создано! <a href="/bookings.html">Мои бронирования</a></div>';
+                alertContainer.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> Бронирование создано. <a href="/bookings.html" style="color:var(--pitch-deep);font-weight:600;">Мои бронирования</a></div>';
                 document.getElementById('booking-form').reset();
                 document.getElementById('estimated-price').textContent = '—';
                 loadBookings();
@@ -186,9 +153,7 @@
                 const err = await resp.json();
                 alertContainer.innerHTML = `<div class="alert alert-danger">${err.message || 'Ошибка бронирования'}</div>`;
             }
-        } catch {
-            alertContainer.innerHTML = '<div class="alert alert-danger">Ошибка соединения с сервером</div>';
-        }
+        } catch { alertContainer.innerHTML = '<div class="alert alert-danger">Ошибка соединения</div>'; }
     });
 
     loadField();

@@ -1,4 +1,5 @@
 const API_BASE = '/api';
+const BRAND_NAME = 'Площадка';
 
 // ===== Auth helpers =====
 function getToken() {
@@ -53,6 +54,27 @@ async function apiFetch(url, options = {}) {
     return response;
 }
 
+// ===== Navbar HTML =====
+function getNavbarHTML() {
+    return `
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <span class="brand-icon">⚽</span> ${BRAND_NAME}
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="/">Поля</a></li>
+                </ul>
+                <ul class="navbar-nav" id="nav-auth"></ul>
+            </div>
+        </div>
+    </nav>`;
+}
+
 // ===== Update navbar based on auth state =====
 function updateNavbar() {
     const navAuth = document.getElementById('nav-auth');
@@ -71,13 +93,17 @@ function updateNavbar() {
             ? '<li class="nav-item"><a class="nav-link" href="/bookings.html">Мои бронирования</a></li>'
             : '';
 
-        const roleBadge = user.role === 'OWNER' ? 'Владелец' : (user.role === 'ADMIN' ? 'Админ' : 'Клиент');
+        const roleLabels = { 'OWNER': 'Владелец', 'ADMIN': 'Админ', 'USER': 'Клиент' };
+        const roleBadge = roleLabels[user.role] || user.role;
 
         navAuth.innerHTML = `
             ${extraLinks}
             ${bookingsLink}
             <li class="nav-item">
-                <span class="nav-link text-light">${user.username} <small class="badge bg-secondary">${roleBadge}</small></span>
+                <span class="nav-link text-light">
+                    ${user.username}
+                    <span class="badge role-badge bg-secondary">${roleBadge}</span>
+                </span>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="#" onclick="logout()">Выйти</a>
@@ -86,7 +112,7 @@ function updateNavbar() {
     } else {
         navAuth.innerHTML = `
             <li class="nav-item"><a class="nav-link" href="/login.html">Войти</a></li>
-            <li class="nav-item"><a class="nav-link" href="/register.html">Регистрация</a></li>
+            <li class="nav-item"><a class="btn btn-outline-light btn-sm ms-2" href="/register.html">Регистрация</a></li>
         `;
     }
 }
@@ -110,7 +136,7 @@ function formatPrice(price) {
 function statusBadge(status) {
     const map = {
         'CONFIRMED': '<span class="badge bg-success">Подтверждено</span>',
-        'PENDING': '<span class="badge bg-warning text-dark">Ожидание</span>',
+        'PENDING': '<span class="badge bg-warning">Ожидание</span>',
         'CANCELLED': '<span class="badge bg-danger">Отменено</span>'
     };
     return map[status] || status;
@@ -119,6 +145,16 @@ function statusBadge(status) {
 // Field type label
 function fieldTypeLabel(type) {
     return type === 'INDOOR' ? 'Крытое' : 'Открытое';
+}
+
+// Footer HTML
+function getFooterHTML() {
+    return `
+    <footer>
+        <div class="container">
+            ${BRAND_NAME} &copy; ${new Date().getFullYear()} — Бронирование футбольных полей
+        </div>
+    </footer>`;
 }
 
 document.addEventListener('DOMContentLoaded', updateNavbar);
