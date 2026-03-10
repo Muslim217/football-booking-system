@@ -22,5 +22,6 @@ public class FieldResponse {
     private BigDecimal pricePerHour;
     private String description;
     private Boolean isActive;
+    private String ownerUsername;
     private LocalDateTime createdAt;
 }

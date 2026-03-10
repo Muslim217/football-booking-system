@@ -23,4 +23,6 @@ public class RegisterRequest {
     @NotBlank(message = "Пароль обязателен")
     @Size(min = 6, max = 100, message = "Пароль должен быть от 6 до 100 символов")
     private String password;
+
+    private String role; // USER или OWNER (по умолчанию USER)
 }

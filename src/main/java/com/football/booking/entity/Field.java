@@ -39,6 +39,10 @@ public class Field {
     @Column(length = 1000)
     private String description;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id", nullable = false)
+    private User owner;
+
     @Column(nullable = false)
     @Builder.Default
     private Boolean isActive = true;

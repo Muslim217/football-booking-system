@@ -31,11 +31,17 @@ public class AuthService {
             throw new RuntimeException("Пользователь с таким email уже существует");
         }
 
+        // Определяем роль: USER или OWNER
+        Role role = Role.USER;
+        if (request.getRole() != null && request.getRole().equalsIgnoreCase("OWNER")) {
+            role = Role.OWNER;
+        }
+
         User user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.USER)
+                .role(role)
                 .build();
 
         userRepository.save(user);

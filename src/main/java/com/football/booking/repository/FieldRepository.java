@@ -10,4 +10,8 @@ import java.util.List;
 public interface FieldRepository extends JpaRepository<Field, Long> {
 
     List<Field> findByIsActiveTrue();
+
+    List<Field> findByOwnerId(Long ownerId);
+
+    List<Field> findByOwnerIdAndIsActiveTrue(Long ownerId);
 }

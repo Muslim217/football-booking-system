@@ -30,6 +30,11 @@ function isAdmin() {
     return user && user.role === 'ADMIN';
 }
 
+function isOwner() {
+    const user = getUser();
+    return user && user.role === 'OWNER';
+}
+
 // ===== Fetch wrapper =====
 async function apiFetch(url, options = {}) {
     const token = getToken();
@@ -55,15 +60,24 @@ function updateNavbar() {
 
     if (isLoggedIn()) {
         const user = getUser();
-        let adminLink = '';
-        if (isAdmin()) {
-            adminLink = '<li class="nav-item"><a class="nav-link" href="/admin.html">Админ-панель</a></li>';
+        let extraLinks = '';
+        if (isOwner()) {
+            extraLinks = '<li class="nav-item"><a class="nav-link" href="/owner.html">Мои поля</a></li>';
         }
+        if (isAdmin()) {
+            extraLinks = '<li class="nav-item"><a class="nav-link" href="/admin.html">Админ-панель</a></li>';
+        }
+        const bookingsLink = (user.role === 'USER' || user.role === 'ADMIN')
+            ? '<li class="nav-item"><a class="nav-link" href="/bookings.html">Мои бронирования</a></li>'
+            : '';
+
+        const roleBadge = user.role === 'OWNER' ? 'Владелец' : (user.role === 'ADMIN' ? 'Админ' : 'Клиент');
+
         navAuth.innerHTML = `
-            ${adminLink}
-            <li class="nav-item"><a class="nav-link" href="/bookings.html">Мои бронирования</a></li>
+            ${extraLinks}
+            ${bookingsLink}
             <li class="nav-item">
-                <span class="nav-link text-light">${user.username}</span>
+                <span class="nav-link text-light">${user.username} <small class="badge bg-secondary">${roleBadge}</small></span>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="#" onclick="logout()">Выйти</a>

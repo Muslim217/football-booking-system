@@ -40,11 +40,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
-                        // Поля — чтение для всех, изменение только для ADMIN
-                        .requestMatchers(HttpMethod.GET, "/api/fields/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/fields/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/fields/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/fields/**").hasRole("ADMIN")
+                        // Поля — публичный просмотр, управление для OWNER/ADMIN
+                        .requestMatchers(HttpMethod.GET, "/api/fields").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/fields/{id}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/fields/my").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/fields/**").hasAnyRole("OWNER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/fields/**").hasAnyRole("OWNER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/fields/**").hasAnyRole("OWNER", "ADMIN")
                         // Бронирования по полю — доступно всем
                         .requestMatchers(HttpMethod.GET, "/api/bookings/field/**").permitAll()
                         // Остальное — нужна авторизация
