@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Бронирование — Football Booking</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/"><i class="bi bi-dribbble"></i> Football Booking</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item"><a class="nav-link" href="/">Поля</a></li>
+            </ul>
+            <ul class="navbar-nav" id="nav-auth"></ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="row">
+        <!-- Field info -->
+        <div class="col-md-5 mb-4">
+            <div class="card">
+                <div class="card-body" id="field-info">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-success"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Existing bookings for this field -->
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h6><i class="bi bi-calendar-check"></i> Занятое время</h6>
+                    <div id="existing-bookings">
+                        <p class="text-muted small">Загрузка...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Booking form -->
+        <div class="col-md-7">
+            <div class="card">
+                <div class="card-body p-4">
+                    <h4 class="mb-3"><i class="bi bi-calendar-plus"></i> Забронировать поле</h4>
+                    <div id="alert-container"></div>
+                    <form id="booking-form">
+                        <div class="mb-3">
+                            <label for="startTime" class="form-label">Начало</label>
+                            <input type="datetime-local" class="form-control" id="startTime" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="endTime" class="form-label">Окончание</label>
+                            <input type="datetime-local" class="form-control" id="endTime" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Расчётная стоимость</label>
+                            <p class="price-tag" id="estimated-price">—</p>
+                        </div>
+                        <button type="submit" class="btn btn-book w-100" id="btn-submit">
+                            <i class="bi bi-check-circle"></i> Забронировать
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <div class="container">Football Booking System &copy; 2026</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/api.js"></script>
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const fieldId = params.get('id');
+    let fieldData = null;
+
+    if (!fieldId) {
+        window.location.href = '/';
+    }
+
+    if (!isLoggedIn()) {
+        window.location.href = '/login.html';
+    }
+
+    // Load field info
+    async function loadField() {
+        try {
+            const resp = await fetch(API_BASE + '/fields/' + fieldId);
+            if (!resp.ok) throw new Error();
+            fieldData = await resp.json();
+
+            document.getElementById('field-info').innerHTML = `
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h5 class="mb-0">${fieldData.name}</h5>
+                    <span class="field-type-badge ${fieldData.fieldType === 'INDOOR' ? 'indoor' : 'outdoor'}">
+                        ${fieldTypeLabel(fieldData.fieldType)}
+                    </span>
+                </div>
+                <p class="text-muted mb-1"><i class="bi bi-geo-alt"></i> ${fieldData.address}</p>
+                <p>${fieldData.description || ''}</p>
+                <p class="price-tag mb-0">${formatPrice(fieldData.pricePerHour)}/час</p>
+            `;
+        } catch {
+            document.getElementById('field-info').innerHTML = '<div class="alert alert-danger">Поле не найдено</div>';
+        }
+    }
+
+    // Load existing bookings
+    async function loadBookings() {
+        try {
+            const resp = await fetch(API_BASE + '/bookings/field/' + fieldId);
+            if (!resp.ok) throw new Error();
+            const bookings = await resp.json();
+
+            const active = bookings.filter(b => b.status !== 'CANCELLED');
+            const container = document.getElementById('existing-bookings');
+
+            if (active.length === 0) {
+                container.innerHTML = '<p class="text-muted small mb-0">Нет бронирований — всё свободно</p>';
+            } else {
+                container.innerHTML = '<ul class="list-group list-group-flush">' +
+                    active.map(b => `
+                        <li class="list-group-item px-0 py-1 small">
+                            <i class="bi bi-clock"></i> ${formatDateTime(b.startTime)} — ${formatDateTime(b.endTime)}
+                        </li>
+                    `).join('') + '</ul>';
+            }
+        } catch {
+            document.getElementById('existing-bookings').innerHTML = '';
+        }
+    }
+
+    // Calculate price
+    function updatePrice() {
+        const start = document.getElementById('startTime').value;
+        const end = document.getElementById('endTime').value;
+        if (start && end && fieldData) {
+            const hours = (new Date(end) - new Date(start)) / 3600000;
+            if (hours > 0) {
+                const price = hours * fieldData.pricePerHour;
+                document.getElementById('estimated-price').textContent = formatPrice(price.toFixed(2));
+            } else {
+                document.getElementById('estimated-price').textContent = '—';
+            }
+        }
+    }
+
+    document.getElementById('startTime').addEventListener('change', updatePrice);
+    document.getElementById('endTime').addEventListener('change', updatePrice);
+
+    // Submit booking
+    document.getElementById('booking-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const alertContainer = document.getElementById('alert-container');
+        alertContainer.innerHTML = '';
+
+        const body = {
+            fieldId: parseInt(fieldId),
+            startTime: document.getElementById('startTime').value + ':00',
+            endTime: document.getElementById('endTime').value + ':00'
+        };
+
+        try {
+            const resp = await apiFetch('/bookings', {
+                method: 'POST',
+                body: JSON.stringify(body)
+            });
+
+            if (resp.ok) {
+                alertContainer.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle"></i> Бронирование создано! <a href="/bookings.html">Мои бронирования</a></div>';
+                document.getElementById('booking-form').reset();
+                document.getElementById('estimated-price').textContent = '—';
+                loadBookings();
+            } else {
+                const err = await resp.json();
+                alertContainer.innerHTML = `<div class="alert alert-danger">${err.message || 'Ошибка бронирования'}</div>`;
+            }
+        } catch {
+            alertContainer.innerHTML = '<div class="alert alert-danger">Ошибка соединения с сервером</div>';
+        }
+    });
+
+    loadField();
+    loadBookings();
+</script>
+</body>
+</html>

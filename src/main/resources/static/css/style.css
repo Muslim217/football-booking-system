@@ -1,0 +1,88 @@
+body {
+    background-color: #f5f7fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+
+.field-type-badge {
+    font-size: 0.8rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+.field-type-badge.indoor {
+    background-color: #e3f2fd;
+    color: #1565c0;
+}
+
+.field-type-badge.outdoor {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.hero-section {
+    background: linear-gradient(135deg, #1b5e20 0%, #388e3c 100%);
+    color: white;
+    padding: 60px 0;
+    margin-bottom: 30px;
+}
+
+.hero-section h1 {
+    font-weight: 700;
+}
+
+.price-tag {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #2e7d32;
+}
+
+.auth-container {
+    max-width: 450px;
+    margin: 80px auto;
+}
+
+.btn-book {
+    background-color: #2e7d32;
+    border-color: #2e7d32;
+    color: white;
+}
+
+.btn-book:hover {
+    background-color: #1b5e20;
+    border-color: #1b5e20;
+    color: white;
+}
+
+.alert {
+    border-radius: 8px;
+}
+
+.table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+footer {
+    margin-top: 60px;
+    padding: 20px 0;
+    background-color: #263238;
+    color: #b0bec5;
+    text-align: center;
+    font-size: 0.9rem;
+}
