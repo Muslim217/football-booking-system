@@ -29,6 +29,9 @@ public class Field {
     @Column(nullable = false)
     private String address;
 
+    @Column
+    private String city;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private FieldType fieldType;
@@ -38,6 +41,9 @@ public class Field {
 
     @Column(length = 1000)
     private String description;
+
+    @Column(name = "photo_url")
+    private String photoUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)

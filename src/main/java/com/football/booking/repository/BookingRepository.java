@@ -1,7 +1,8 @@
 package com.football.booking.repository;
 
 import com.football.booking.entity.Booking;
-import com.football.booking.enums.BookingStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,9 +14,13 @@ import java.util.List;
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
+    // Без пагинации (для логики расписания)
     List<Booking> findByUserId(Long userId);
-
     List<Booking> findByFieldId(Long fieldId);
+
+    // С пагинацией (для API)
+    Page<Booking> findByUserId(Long userId, Pageable pageable);
+    Page<Booking> findByFieldId(Long fieldId, Pageable pageable);
 
     @Query("SELECT b FROM Booking b WHERE b.field.id = :fieldId " +
            "AND b.status <> 'CANCELLED' " +

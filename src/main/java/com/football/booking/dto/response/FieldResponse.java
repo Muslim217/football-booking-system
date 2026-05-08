@@ -10,17 +10,19 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class FieldResponse {
 
     private Long id;
     private String name;
     private String address;
+    private String city;
     private FieldType fieldType;
     private BigDecimal pricePerHour;
     private String description;
+    private String photoUrl;
     private Boolean isActive;
     private String ownerUsername;
     private LocalDateTime createdAt;

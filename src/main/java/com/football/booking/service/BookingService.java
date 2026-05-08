@@ -13,6 +13,8 @@ import com.football.booking.repository.BookingRepository;
 import com.football.booking.repository.FieldRepository;
 import com.football.booking.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
@@ -22,7 +24,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,33 +35,27 @@ public class BookingService {
 
     @Transactional
     public BookingResponse createBooking(BookingRequest request, Authentication authentication) {
-        String username = authentication.getName();
-
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
+        User user = getAuthenticatedUser(authentication);
 
         Field field = fieldRepository.findById(request.getFieldId())
-                .orElseThrow(() -> new ResourceNotFoundException("Поле не найдено с ID: " + request.getFieldId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Площадка не найдена с ID: " + request.getFieldId()));
 
         if (!field.getIsActive()) {
-            throw new IllegalArgumentException("Поле неактивно и недоступно для бронирования");
+            throw new IllegalArgumentException("Площадка неактивна и недоступна для бронирования");
         }
 
-        if (request.getEndTime().isBefore(request.getStartTime()) ||
-                request.getEndTime().isEqual(request.getStartTime())) {
+        if (!request.getEndTime().isAfter(request.getStartTime())) {
             throw new IllegalArgumentException("Время окончания должно быть после времени начала");
         }
 
-        // Проверка пересечений
         List<Booking> conflicts = bookingRepository.findConflictingBookings(
                 request.getFieldId(), request.getStartTime(), request.getEndTime());
 
         if (!conflicts.isEmpty()) {
             throw new BookingConflictException(
-                    "Поле уже забронировано на указанное время. Количество пересечений: " + conflicts.size());
+                    "Площадка уже забронирована на указанное время");
         }
 
-        // Расчёт стоимости
         long minutes = Duration.between(request.getStartTime(), request.getEndTime()).toMinutes();
         BigDecimal hours = BigDecimal.valueOf(minutes).divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
         BigDecimal totalPrice = field.getPricePerHour().multiply(hours).setScale(2, RoundingMode.HALF_UP);
@@ -74,37 +69,28 @@ public class BookingService {
                 .status(BookingStatus.CONFIRMED)
                 .build();
 
-        Booking saved = bookingRepository.save(booking);
-        return mapToResponse(saved);
+        return mapToResponse(bookingRepository.save(booking));
     }
 
-    public List<BookingResponse> getMyBookings(Authentication authentication) {
-        String username = authentication.getName();
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
-
-        return bookingRepository.findByUserId(user.getId())
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+    public Page<BookingResponse> getMyBookings(Authentication authentication, Pageable pageable) {
+        User user = getAuthenticatedUser(authentication);
+        return bookingRepository.findByUserId(user.getId(), pageable)
+                .map(this::mapToResponse);
     }
 
-    public List<BookingResponse> getAllBookings() {
-        return bookingRepository.findAll()
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+    public Page<BookingResponse> getAllBookings(Pageable pageable) {
+        return bookingRepository.findAll(pageable)
+                .map(this::mapToResponse);
     }
 
     public BookingResponse getBookingById(Long id, Authentication authentication) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Бронирование не найдено с ID: " + id));
 
-        String username = authentication.getName();
         boolean isAdmin = authentication.getAuthorities()
                 .contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
 
-        if (!booking.getUser().getUsername().equals(username) && !isAdmin) {
+        if (!booking.getUser().getUsername().equals(authentication.getName()) && !isAdmin) {
             throw new AccessDeniedException("У вас нет доступа к этому бронированию");
         }
 
@@ -116,11 +102,10 @@ public class BookingService {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Бронирование не найдено с ID: " + id));
 
-        String username = authentication.getName();
         boolean isAdmin = authentication.getAuthorities()
                 .contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
 
-        if (!booking.getUser().getUsername().equals(username) && !isAdmin) {
+        if (!booking.getUser().getUsername().equals(authentication.getName()) && !isAdmin) {
             throw new AccessDeniedException("У вас нет прав для отмены этого бронирования");
         }
 
@@ -129,19 +114,20 @@ public class BookingService {
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
-        Booking updated = bookingRepository.save(booking);
-        return mapToResponse(updated);
+        return mapToResponse(bookingRepository.save(booking));
     }
 
-    public List<BookingResponse> getBookingsByField(Long fieldId) {
+    public Page<BookingResponse> getBookingsByField(Long fieldId, Pageable pageable) {
         if (!fieldRepository.existsById(fieldId)) {
-            throw new ResourceNotFoundException("Поле не найдено с ID: " + fieldId);
+            throw new ResourceNotFoundException("Площадка не найдена с ID: " + fieldId);
         }
+        return bookingRepository.findByFieldId(fieldId, pageable)
+                .map(this::mapToResponse);
+    }
 
-        return bookingRepository.findByFieldId(fieldId)
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+    private User getAuthenticatedUser(Authentication authentication) {
+        return userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
     }
 
     private BookingResponse mapToResponse(Booking booking) {
