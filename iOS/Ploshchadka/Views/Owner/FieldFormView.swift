@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct FieldFormView: View {
-    /// Pass nil to create a new field, pass a Field to edit it
     let existing: Field?
 
     @Environment(\.dismiss) var dismiss
@@ -16,64 +15,120 @@ struct FieldFormView: View {
 
     private var isEditing: Bool { existing != nil }
     private var title: String    { isEditing ? "Редактировать поле" : "Новое поле" }
-
-    private var canSave: Bool {
-        !name.isEmpty && !address.isEmpty && Double(price) != nil
-    }
+    private var canSave: Bool    { !name.isEmpty && !address.isEmpty && Double(price) != nil }
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Основное") {
-                    TextField("Название", text: $name)
-                        .textInputAutocapitalization(.words)
-                    TextField("Адрес", text: $address)
-                        .textInputAutocapitalization(.words)
-                }
+            ZStack {
+                Color.fbBg.ignoresSafeArea()
 
-                Section("Параметры") {
-                    Picker("Тип поля", selection: $fieldType) {
-                        Text("Открытое").tag("OUTDOOR")
-                        Text("Крытое").tag("INDOOR")
-                    }
-                    .pickerStyle(.segmented)
-                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-
-                    HStack {
-                        Text("Цена за час (₽)")
-                        Spacer()
-                        TextField("3 000", text: $price)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 100)
-                    }
-                }
-
-                Section("Описание") {
-                    TextField("Натуральный газон, раздевалки, парковка...",
-                              text: $description,
-                              axis: .vertical)
-                    .lineLimit(3...6)
-                }
-
-                if let error = errorMessage {
-                    Section { ErrorBanner(message: error) }
-                }
-
-                Section {
-                    Button {
-                        Task { await save() }
-                    } label: {
-                        HStack {
-                            if isLoading { ProgressView() }
-                            Spacer()
-                            Text(isEditing ? "Сохранить изменения" : "Добавить поле")
-                                .fontWeight(.semibold)
-                            Spacer()
+                ScrollView {
+                    VStack(spacing: 16) {
+                        // Basic info
+                        VStack(alignment: .leading, spacing: 14) {
+                            SectionHeader(title: "Основное")
+                            FormField(label: "Название", placeholder: "Стадион Лужники", text: $name)
+                                .textInputAutocapitalization(.words)
+                            FormField(label: "Адрес", placeholder: "ул. Лужники, 24", text: $address)
+                                .textInputAutocapitalization(.words)
                         }
+                        .padding(16)
+                        .background(Color.fbSurface)
+                        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.fbBorder, lineWidth: 1))
+                        .cornerRadius(14)
+                        .shadow(color: Color(hex: "172117").opacity(0.05), radius: 6, x: 0, y: 2)
+
+                        // Params
+                        VStack(alignment: .leading, spacing: 14) {
+                            SectionHeader(title: "Параметры")
+
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("Тип поля")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(.fbText)
+                                HStack(spacing: 10) {
+                                    ForEach([("OUTDOOR", "Открытое"), ("INDOOR", "Крытое")], id: \.0) { val, label in
+                                        Button { fieldType = val } label: {
+                                            Text(label)
+                                                .font(.system(size: 14, weight: .semibold))
+                                                .frame(maxWidth: .infinity)
+                                                .padding(.vertical, 10)
+                                                .background(fieldType == val ? Color.fbPrimary : Color.fbSurface)
+                                                .foregroundColor(fieldType == val ? .white : .fbTextMuted)
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 10)
+                                                        .strokeBorder(fieldType == val ? Color.fbPrimary : Color.fbBorder, lineWidth: fieldType == val ? 2 : 1)
+                                                )
+                                                .cornerRadius(10)
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+                            }
+
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("Цена за час (₽)")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(.fbText)
+                                TextField("3 000", text: $price)
+                                    .font(.system(size: 15))
+                                    .keyboardType(.decimalPad)
+                                    .padding(.horizontal, 14).padding(.vertical, 11)
+                                    .background(Color.fbBg)
+                                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.fbBorder, lineWidth: 1.5))
+                                    .cornerRadius(10)
+                            }
+                        }
+                        .padding(16)
+                        .background(Color.fbSurface)
+                        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.fbBorder, lineWidth: 1))
+                        .cornerRadius(14)
+                        .shadow(color: Color(hex: "172117").opacity(0.05), radius: 6, x: 0, y: 2)
+
+                        // Description
+                        VStack(alignment: .leading, spacing: 14) {
+                            SectionHeader(title: "Описание")
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("Описание (необязательно)")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(.fbText)
+                                TextField("Натуральный газон, раздевалки, парковка…",
+                                          text: $description, axis: .vertical)
+                                    .font(.system(size: 15))
+                                    .lineLimit(3...6)
+                                    .padding(.horizontal, 14).padding(.vertical, 11)
+                                    .background(Color.fbBg)
+                                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.fbBorder, lineWidth: 1.5))
+                                    .cornerRadius(10)
+                            }
+                        }
+                        .padding(16)
+                        .background(Color.fbSurface)
+                        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.fbBorder, lineWidth: 1))
+                        .cornerRadius(14)
+                        .shadow(color: Color(hex: "172117").opacity(0.05), radius: 6, x: 0, y: 2)
+
+                        if let error = errorMessage {
+                            ErrorBanner(message: error)
+                        }
+
+                        Button {
+                            Task { await save() }
+                        } label: {
+                            HStack(spacing: 8) {
+                                if isLoading { ProgressView().tint(.white).scaleEffect(0.85) }
+                                Text(isEditing ? "Сохранить изменения" : "Добавить поле")
+                                    .font(.system(size: 15, weight: .semibold))
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 52)
+                            .background(canSave ? Color.fbPrimary : Color.fbBorder)
+                            .foregroundColor(canSave ? .white : .fbTextMuted)
+                            .cornerRadius(10)
+                        }
+                        .disabled(!canSave || isLoading)
                     }
-                    .foregroundColor(canSave ? .green : .secondary)
-                    .disabled(!canSave || isLoading)
+                    .padding(16)
                 }
             }
             .navigationTitle(title)
@@ -81,6 +136,7 @@ struct FieldFormView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Отмена") { dismiss() }
+                        .foregroundColor(.fbPrimary)
                 }
             }
             .onAppear { prefill() }
@@ -101,18 +157,9 @@ struct FieldFormView: View {
             errorMessage = "Введите корректную цену"
             return
         }
-
-        isLoading = true
-        errorMessage = nil
-
-        let body = FieldRequest(
-            name: name,
-            address: address,
-            fieldType: fieldType,
-            pricePerHour: priceValue,
-            description: description
-        )
-
+        isLoading = true; errorMessage = nil
+        let body = FieldRequest(name: name, address: address, fieldType: fieldType,
+                                pricePerHour: priceValue, description: description)
         do {
             if let existing {
                 let _: Field = try await APIClient.shared.fetch("/fields/\(existing.id)", method: "PUT", body: body)
@@ -126,5 +173,16 @@ struct FieldFormView: View {
             errorMessage = "Ошибка соединения"
         }
         isLoading = false
+    }
+}
+
+private struct SectionHeader: View {
+    let title: String
+    var body: some View {
+        Text(title)
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundColor(.fbTextMuted)
+            .textCase(.uppercase)
+            .tracking(0.8)
     }
 }

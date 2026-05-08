@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct MainTabView: View {
-    @EnvironmentObject var authStore: AuthStore
+    @Environment(AuthStore.self) var authStore
 
     var body: some View {
         TabView {
@@ -9,7 +9,7 @@ struct MainTabView: View {
                 FieldsListView()
             }
             .tabItem {
-                Label("Поля", systemImage: "sportscourt.fill")
+                Label("Площадки", systemImage: "sportscourt.fill")
             }
 
             if authStore.isOwner {
@@ -26,7 +26,7 @@ struct MainTabView: View {
                     MyBookingsView()
                 }
                 .tabItem {
-                    Label("Бронирования", systemImage: "calendar.badge.clock")
+                    Label("Брони", systemImage: "calendar.badge.clock")
                 }
             }
 
@@ -37,6 +37,6 @@ struct MainTabView: View {
                 Label("Профиль", systemImage: "person.circle.fill")
             }
         }
-        .tint(.green)
+        .tint(Color.fbPrimary)
     }
 }

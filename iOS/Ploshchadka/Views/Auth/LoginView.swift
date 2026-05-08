@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct LoginView: View {
-    @EnvironmentObject var authStore: AuthStore
+    @Environment(AuthStore.self) var authStore
 
     @State private var username = ""
     @State private var password = ""
@@ -9,70 +9,92 @@ struct LoginView: View {
     @State private var errorMessage: String?
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                // Hero
-                VStack(spacing: 10) {
-                    Text("⚽")
-                        .font(.system(size: 72))
-                    Text("Площадка")
-                        .font(.largeTitle.bold())
-                    Text("Бронирование футбольных полей")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-                .padding(.top, 60)
-                .padding(.bottom, 44)
+        ZStack {
+            Color.fbBg.ignoresSafeArea()
 
-                // Form
-                VStack(spacing: 18) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Имя пользователя")
-                            .font(.subheadline.weight(.medium))
-                        TextField("Введите имя", text: $username)
-                            .textFieldStyle(.roundedBorder)
+            ScrollView {
+                VStack(spacing: 0) {
+                    Spacer().frame(height: 48)
+
+                    // Card
+                    VStack(alignment: .leading, spacing: 0) {
+                        // Logo row
+                        HStack(spacing: 10) {
+                            BrandMark(size: 40)
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text("Площадка")
+                                    .font(.system(size: 17, weight: .bold))
+                                    .foregroundColor(.fbText)
+                                Text("Войдите в аккаунт")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.fbTextMuted)
+                            }
+                        }
+                        .padding(.bottom, 28)
+
+                        Text("Вход")
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundColor(.fbText)
+                        Text("Введите данные для входа в систему")
+                            .font(.system(size: 15))
+                            .foregroundColor(.fbTextMuted)
+                            .padding(.top, 4)
+                            .padding(.bottom, 32)
+
+                        // Username
+                        FormField(label: "Имя пользователя", placeholder: "username", text: $username)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
-                            .submitLabel(.next)
-                    }
+                            .padding(.bottom, 16)
 
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Пароль")
-                            .font(.subheadline.weight(.medium))
-                        SecureField("Введите пароль", text: $password)
-                            .textFieldStyle(.roundedBorder)
-                            .submitLabel(.done)
-                            .onSubmit { Task { await login() } }
-                    }
+                        // Password
+                        FormSecureField(label: "Пароль", placeholder: "••••••••", text: $password)
+                            .padding(.bottom, 20)
 
-                    if let error = errorMessage {
-                        ErrorBanner(message: error)
-                    }
+                        if let error = errorMessage {
+                            ErrorBanner(message: error).padding(.bottom, 16)
+                        }
 
-                    PrimaryButton(title: "Войти", isLoading: isLoading) {
-                        Task { await login() }
+                        PrimaryButton(title: "Войти", isLoading: isLoading) {
+                            Task { await login() }
+                        }
+                        .disabled(username.isEmpty || password.isEmpty)
+                        .opacity(username.isEmpty || password.isEmpty ? 0.45 : 1)
+
+                        Divider().background(Color.fbBorder).padding(.vertical, 24)
+
+                        HStack(spacing: 4) {
+                            Text("Нет аккаунта?")
+                                .font(.system(size: 14))
+                                .foregroundColor(.fbTextMuted)
+                            NavigationLink("Зарегистрируйтесь") {
+                                RegisterView()
+                            }
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.fbPrimary)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .center)
                     }
-                    .disabled(username.isEmpty || password.isEmpty)
-                    .opacity(username.isEmpty || password.isEmpty ? 0.6 : 1)
+                    .padding(28)
+                    .background(Color.fbSurface)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 28)
+                            .strokeBorder(Color.fbBorder, lineWidth: 1)
+                    )
+                    .cornerRadius(28)
+                    .shadow(color: Color(hex: "172117").opacity(0.12), radius: 32, x: 0, y: 12)
+                    .padding(.horizontal, 20)
+
+                    Spacer().frame(height: 40)
                 }
-                .padding(.horizontal, 24)
-
-                Divider()
-                    .padding(.vertical, 32)
-                    .padding(.horizontal, 24)
-
-                HStack(spacing: 4) {
-                    Text("Нет аккаунта?")
-                        .foregroundColor(.secondary)
-                    NavigationLink("Зарегистрируйтесь") {
-                        RegisterView()
-                    }
-                    .foregroundColor(.green)
-                    .fontWeight(.semibold)
-                }
-                .font(.subheadline)
-                .padding(.bottom, 40)
             }
+
+            // Pitch strip at bottom
+            VStack {
+                Spacer()
+                PitchStrip()
+            }
+            .ignoresSafeArea()
         }
         .navigationBarHidden(true)
     }
@@ -94,5 +116,59 @@ struct LoginView: View {
             errorMessage = "Ошибка соединения с сервером"
         }
         isLoading = false
+    }
+}
+
+// MARK: - Form Field helpers
+
+struct FormField: View {
+    let label: String
+    let placeholder: String
+    @Binding var text: String
+    var keyboardType: UIKeyboardType = .default
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(label)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.fbText)
+            TextField(placeholder, text: $text)
+                .font(.system(size: 15))
+                .foregroundColor(.fbText)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 11)
+                .background(Color.fbBg)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .strokeBorder(Color.fbBorder, lineWidth: 1.5)
+                )
+                .cornerRadius(10)
+                .keyboardType(keyboardType)
+        }
+    }
+}
+
+struct FormSecureField: View {
+    let label: String
+    let placeholder: String
+    @Binding var text: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(label)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.fbText)
+            SecureField(placeholder, text: $text)
+                .font(.system(size: 15))
+                .foregroundColor(.fbText)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 11)
+                .background(Color.fbBg)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .strokeBorder(Color.fbBorder, lineWidth: 1.5)
+                )
+                .cornerRadius(10)
+        }
     }
 }

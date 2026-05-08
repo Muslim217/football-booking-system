@@ -1,11 +1,11 @@
 import SwiftUI
 
 struct RegisterView: View {
-    @EnvironmentObject var authStore: AuthStore
+    @Environment(AuthStore.self) var authStore
     @Environment(\.dismiss) var dismiss
 
     @State private var username = ""
-    @State private var email = ""
+    @State private var email    = ""
     @State private var password = ""
     @State private var selectedRole = "USER"
     @State private var isLoading = false
@@ -16,86 +16,106 @@ struct RegisterView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                VStack(spacing: 8) {
-                    Text("⚽").font(.system(size: 52))
-                    Text("Регистрация").font(.title.bold())
-                    Text("Создайте аккаунт").foregroundColor(.secondary)
-                }
-                .padding(.top, 20)
+        ZStack {
+            Color.fbBg.ignoresSafeArea()
 
-                VStack(spacing: 16) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Имя пользователя")
-                            .font(.subheadline.weight(.medium))
-                        TextField("Минимум 3 символа", text: $username)
-                            .textFieldStyle(.roundedBorder)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
-                    }
+            ScrollView {
+                VStack(spacing: 0) {
+                    Spacer().frame(height: 24)
 
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Email")
-                            .font(.subheadline.weight(.medium))
-                        TextField("example@mail.com", text: $email)
-                            .textFieldStyle(.roundedBorder)
-                            .textInputAutocapitalization(.never)
-                            .keyboardType(.emailAddress)
-                            .autocorrectionDisabled()
-                    }
-
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Пароль")
-                            .font(.subheadline.weight(.medium))
-                        SecureField("Минимум 6 символов", text: $password)
-                            .textFieldStyle(.roundedBorder)
-                    }
-
-                    // Role selector
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Я регистрируюсь как")
-                            .font(.subheadline.weight(.medium))
-                        HStack(spacing: 12) {
-                            RoleCard(
-                                title: "Клиент",
-                                subtitle: "Бронировать поля",
-                                icon: "person.fill",
-                                value: "USER",
-                                selected: $selectedRole
-                            )
-                            RoleCard(
-                                title: "Владелец",
-                                subtitle: "Сдавать поля",
-                                icon: "building.2.fill",
-                                value: "OWNER",
-                                selected: $selectedRole
-                            )
+                    VStack(alignment: .leading, spacing: 0) {
+                        // Logo row
+                        HStack(spacing: 10) {
+                            BrandMark(size: 40)
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text("Площадка")
+                                    .font(.system(size: 17, weight: .bold))
+                                    .foregroundColor(.fbText)
+                                Text("Создайте аккаунт")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.fbTextMuted)
+                            }
                         }
-                    }
+                        .padding(.bottom, 28)
 
-                    if let error = errorMessage {
-                        ErrorBanner(message: error)
-                    }
+                        Text("Регистрация")
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundColor(.fbText)
+                        Text("Заполните данные для создания аккаунта")
+                            .font(.system(size: 15))
+                            .foregroundColor(.fbTextMuted)
+                            .padding(.top, 4)
+                            .padding(.bottom, 32)
 
-                    PrimaryButton(title: "Создать аккаунт", isLoading: isLoading) {
-                        Task { await register() }
+                        FormField(label: "Имя пользователя", placeholder: "username", text: $username)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .padding(.bottom, 16)
+
+                        FormField(label: "Email", placeholder: "you@example.com",
+                                  text: $email, keyboardType: .emailAddress)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .padding(.bottom, 16)
+
+                        FormSecureField(label: "Пароль", placeholder: "Минимум 6 символов", text: $password)
+                            .padding(.bottom, 20)
+
+                        // Role selector
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("Я регистрируюсь как")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.fbText)
+                            HStack(spacing: 10) {
+                                RoleCard(title: "Клиент",   subtitle: "Бронировать поля",
+                                         icon: "person.fill",     value: "USER",  selected: $selectedRole)
+                                RoleCard(title: "Владелец", subtitle: "Сдавать поля",
+                                         icon: "building.2.fill", value: "OWNER", selected: $selectedRole)
+                            }
+                        }
+                        .padding(.bottom, 20)
+
+                        if let error = errorMessage {
+                            ErrorBanner(message: error).padding(.bottom, 16)
+                        }
+
+                        PrimaryButton(title: "Создать аккаунт", isLoading: isLoading) {
+                            Task { await register() }
+                        }
+                        .opacity(canSubmit ? 1 : 0.45)
+                        .disabled(!canSubmit)
+
+                        Divider().background(Color.fbBorder).padding(.vertical, 24)
+
+                        HStack(spacing: 4) {
+                            Text("Уже есть аккаунт?")
+                                .font(.system(size: 14))
+                                .foregroundColor(.fbTextMuted)
+                            Button("Войдите") { dismiss() }
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.fbPrimary)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .center)
                     }
-                    .opacity(canSubmit ? 1 : 0.6)
-                    .disabled(!canSubmit)
+                    .padding(28)
+                    .background(Color.fbSurface)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 28)
+                            .strokeBorder(Color.fbBorder, lineWidth: 1)
+                    )
+                    .cornerRadius(28)
+                    .shadow(color: Color(hex: "172117").opacity(0.12), radius: 32, x: 0, y: 12)
+                    .padding(.horizontal, 20)
+
+                    Spacer().frame(height: 40)
                 }
-                .padding(.horizontal, 24)
-
-                HStack(spacing: 4) {
-                    Text("Уже есть аккаунт?")
-                        .foregroundColor(.secondary)
-                    Button("Войдите") { dismiss() }
-                        .foregroundColor(.green)
-                        .fontWeight(.semibold)
-                }
-                .font(.subheadline)
-                .padding(.bottom, 32)
             }
+
+            VStack {
+                Spacer()
+                PitchStrip()
+            }
+            .ignoresSafeArea()
         }
         .navigationTitle("Регистрация")
         .navigationBarTitleDisplayMode(.inline)
@@ -135,26 +155,26 @@ private struct RoleCard: View {
         Button { selected = value } label: {
             VStack(alignment: .leading, spacing: 8) {
                 Image(systemName: icon)
-                    .font(.title3)
-                    .foregroundColor(isSelected ? .green : .secondary)
+                    .font(.system(size: 18))
+                    .foregroundColor(isSelected ? .fbPrimary : .fbTextMuted)
                 Text(title)
-                    .font(.subheadline.bold())
-                    .foregroundColor(isSelected ? .primary : .secondary)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(isSelected ? .fbText : .fbTextMuted)
                 Text(subtitle)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(.system(size: 12))
+                    .foregroundColor(.fbTextMuted)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(14)
-            .background(
+            .background(isSelected ? Color.fbPrimarySoft : Color.fbSurface)
+            .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Color.green : Color.gray.opacity(0.3),
-                            lineWidth: isSelected ? 2 : 1)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(isSelected ? Color.green.opacity(0.05) : Color(.systemBackground))
+                    .strokeBorder(
+                        isSelected ? Color.fbPrimary : Color.fbBorder,
+                        lineWidth: isSelected ? 2 : 1
                     )
             )
+            .cornerRadius(12)
         }
         .buttonStyle(.plain)
     }

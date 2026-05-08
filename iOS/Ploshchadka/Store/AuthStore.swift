@@ -1,23 +1,21 @@
 import Foundation
-import SwiftUI
+import Observation
 
-@MainActor
-final class AuthStore: ObservableObject {
-    @Published private(set) var token: String?
-    @Published private(set) var username: String?
-    @Published private(set) var role: String?
+@Observable
+final class AuthStore {
+    var token: String?
+    var username: String?
+    var role: String?
 
     var isLoggedIn: Bool { token != nil }
     var isAdmin:    Bool { role == "ADMIN" }
     var isOwner:    Bool { role == "OWNER" }
     var isUser:     Bool { role == "USER" }
 
-    private let defaults = UserDefaults.standard
-
     init() {
-        token    = defaults.string(forKey: "jwt_token")
-        username = defaults.string(forKey: "username")
-        role     = defaults.string(forKey: "role")
+        token    = UserDefaults.standard.string(forKey: "jwt_token")
+        username = UserDefaults.standard.string(forKey: "username")
+        role     = UserDefaults.standard.string(forKey: "role")
         APIClient.shared.token = token
     }
 
@@ -25,23 +23,19 @@ final class AuthStore: ObservableObject {
         token    = response.token
         username = response.username
         role     = response.role
-
         APIClient.shared.token = response.token
-
-        defaults.set(response.token,    forKey: "jwt_token")
-        defaults.set(response.username, forKey: "username")
-        defaults.set(response.role,     forKey: "role")
+        UserDefaults.standard.set(response.token,    forKey: "jwt_token")
+        UserDefaults.standard.set(response.username, forKey: "username")
+        UserDefaults.standard.set(response.role,     forKey: "role")
     }
 
     func logout() {
         token    = nil
         username = nil
         role     = nil
-
         APIClient.shared.token = nil
-
-        defaults.removeObject(forKey: "jwt_token")
-        defaults.removeObject(forKey: "username")
-        defaults.removeObject(forKey: "role")
+        UserDefaults.standard.removeObject(forKey: "jwt_token")
+        UserDefaults.standard.removeObject(forKey: "username")
+        UserDefaults.standard.removeObject(forKey: "role")
     }
 }

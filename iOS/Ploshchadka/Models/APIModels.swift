@@ -38,16 +38,6 @@ struct BookingRequest: Codable {
     let endTime: String
 }
 
-// MARK: - Pagination
-
-struct Page<T: Codable>: Codable {
-    let content: [T]
-    let totalElements: Int
-    let totalPages: Int
-    let first: Bool
-    let last: Bool
-}
-
 // MARK: - Generic
 
 struct MessageResponse: Codable {

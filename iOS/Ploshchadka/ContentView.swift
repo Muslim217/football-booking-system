@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @EnvironmentObject var authStore: AuthStore
+    @Environment(AuthStore.self) var authStore
 
     var body: some View {
         Group {
