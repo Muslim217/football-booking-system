@@ -16,36 +16,55 @@ struct RegisterView: View {
     }
 
     var body: some View {
-        ZStack {
-            Color.fbBg.ignoresSafeArea()
+        ZStack(alignment: .bottom) {
+            Color.fbSurface.ignoresSafeArea()
 
             ScrollView {
                 VStack(spacing: 0) {
-                    Spacer().frame(height: 24)
+                    // ── Green hero ────────────────────────────────
+                    ZStack {
+                        LinearGradient(
+                            colors: [Color(hex: "2C8341"), Color(hex: "145322")],
+                            startPoint: .topLeading, endPoint: .bottomTrailing
+                        )
+                        .ignoresSafeArea(edges: .top)
 
-                    VStack(alignment: .leading, spacing: 0) {
-                        // Logo row
-                        HStack(spacing: 10) {
-                            BrandMark(size: 40)
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text("Площадка")
-                                    .font(.system(size: 17, weight: .bold))
-                                    .foregroundColor(.fbText)
-                                Text("Создайте аккаунт")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(.fbTextMuted)
-                            }
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 6)
+                                .strokeBorder(Color.white.opacity(0.1), lineWidth: 2)
+                                .padding(.horizontal, 40).padding(.vertical, 20)
+                            Circle()
+                                .strokeBorder(Color.white.opacity(0.1), lineWidth: 2)
+                                .frame(width: 80, height: 80)
                         }
-                        .padding(.bottom, 28)
 
+                        VStack(spacing: 10) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 14)
+                                    .fill(Color.white)
+                                    .frame(width: 52, height: 52)
+                                    .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
+                                Text("⚽").font(.system(size: 24))
+                            }
+                            Text("Площадка")
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                    }
+                    .frame(height: 170)
+
+                    // ── Form ──────────────────────────────────────
+                    VStack(alignment: .leading, spacing: 0) {
                         Text("Регистрация")
-                            .font(.system(size: 24, weight: .bold))
+                            .font(.system(size: 26, weight: .bold))
                             .foregroundColor(.fbText)
+                            .padding(.top, 28)
+                            .padding(.bottom, 6)
+
                         Text("Заполните данные для создания аккаунта")
                             .font(.system(size: 15))
                             .foregroundColor(.fbTextMuted)
-                            .padding(.top, 4)
-                            .padding(.bottom, 32)
+                            .padding(.bottom, 24)
 
                         FormField(label: "Имя пользователя", placeholder: "username", text: $username)
                             .textInputAutocapitalization(.never)
@@ -61,7 +80,6 @@ struct RegisterView: View {
                         FormSecureField(label: "Пароль", placeholder: "Минимум 6 символов", text: $password)
                             .padding(.bottom, 20)
 
-                        // Role selector
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Я регистрируюсь как")
                                 .font(.system(size: 13, weight: .semibold))
@@ -73,7 +91,7 @@ struct RegisterView: View {
                                          icon: "building.2.fill", value: "OWNER", selected: $selectedRole)
                             }
                         }
-                        .padding(.bottom, 20)
+                        .padding(.bottom, 24)
 
                         if let error = errorMessage {
                             ErrorBanner(message: error).padding(.bottom, 16)
@@ -96,29 +114,19 @@ struct RegisterView: View {
                                 .foregroundColor(.fbPrimary)
                         }
                         .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.bottom, 80)
                     }
-                    .padding(28)
+                    .padding(.horizontal, 24)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .background(Color.fbSurface)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 28)
-                            .strokeBorder(Color.fbBorder, lineWidth: 1)
-                    )
-                    .cornerRadius(28)
-                    .shadow(color: Color(hex: "172117").opacity(0.12), radius: 32, x: 0, y: 12)
-                    .padding(.horizontal, 20)
-
-                    Spacer().frame(height: 40)
                 }
             }
+            .ignoresSafeArea(edges: .top)
 
-            VStack {
-                Spacer()
-                PitchStrip()
-            }
-            .ignoresSafeArea()
+            PitchStrip()
         }
-        .navigationTitle("Регистрация")
-        .navigationBarTitleDisplayMode(.inline)
+        .ignoresSafeArea(edges: .bottom)
+        .navigationBarHidden(true)
     }
 
     private func register() async {
@@ -126,8 +134,7 @@ struct RegisterView: View {
         errorMessage = nil
         do {
             let response: AuthResponse = try await APIClient.shared.fetch(
-                "/auth/register",
-                method: "POST",
+                "/auth/register", method: "POST",
                 body: RegisterRequest(username: username, email: email, password: password, role: selectedRole)
             )
             authStore.saveAuth(response)
@@ -166,7 +173,7 @@ private struct RoleCard: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(14)
-            .background(isSelected ? Color.fbPrimarySoft : Color.fbSurface)
+            .background(isSelected ? Color.fbPrimarySoft : Color.fbBg)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .strokeBorder(

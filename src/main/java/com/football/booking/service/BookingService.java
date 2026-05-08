@@ -136,6 +136,7 @@ public class BookingService {
                 .username(booking.getUser().getUsername())
                 .fieldId(booking.getField().getId())
                 .fieldName(booking.getField().getName())
+                .fieldAddress(booking.getField().getAddress())
                 .startTime(booking.getStartTime())
                 .endTime(booking.getEndTime())
                 .totalPrice(booking.getTotalPrice())

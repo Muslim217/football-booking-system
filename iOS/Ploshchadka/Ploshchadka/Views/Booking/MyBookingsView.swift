@@ -107,7 +107,7 @@ struct MyBookingsView: View {
     private func load() async {
         isLoading = true; errorMessage = nil
         do {
-            bookings = try await APIClient.shared.fetch("/bookings/my")
+            bookings = try await APIClient.shared.fetchPage("/bookings/my")
         } catch let e as APIError {
             errorMessage = e.errorDescription
         } catch {

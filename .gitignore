@@ -41,3 +41,11 @@ build/
 ### Env ###
 .env
 .env.local
+
+# Claude Code internal
+.claude/
+
+# Xcode user data
+*.xcuserstate
+xcuserdata/
+data/

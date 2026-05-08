@@ -14,10 +14,15 @@ struct RegisterRequest: Codable {
     let role: String
 }
 
+// Backend returns accessToken (not token)
 struct AuthResponse: Codable {
-    let token: String
+    let accessToken: String
+    let refreshToken: String?
     let username: String
     let role: String
+
+    // Convenience alias
+    var token: String { accessToken }
 }
 
 // MARK: - Field
@@ -42,4 +47,17 @@ struct BookingRequest: Codable {
 
 struct MessageResponse: Codable {
     let message: String?
+}
+
+// MARK: - Pagination wrapper (Spring Page<T>)
+
+struct PageResponse<T: Decodable>: Decodable {
+    let content: [T]
+    let totalElements: Int
+    let totalPages: Int
+    let number: Int      // current page (0-based)
+    let size: Int
+    let last: Bool
+
+    var isLastPage: Bool { last }
 }

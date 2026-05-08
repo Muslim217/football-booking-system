@@ -12,7 +12,7 @@ enum APIError: LocalizedError {
         case .invalidURL:        return "Неверный URL"
         case .network(let e):    return "Ошибка сети: \(e.localizedDescription)"
         case .http(_, let msg):  return msg.isEmpty ? "Ошибка сервера" : msg
-        case .decoding:          return "Ошибка обработки данных"
+        case .decoding(let e):   return "Ошибка данных: \(e.localizedDescription)"
         case .unauthorized:      return "Сессия истекла. Войдите снова"
         }
     }
@@ -21,8 +21,6 @@ enum APIError: LocalizedError {
 final class APIClient {
     static let shared = APIClient()
 
-    // MARK: - Configuration
-    // Change to your server address when testing on a real device
     var baseURL = "http://localhost:8080/api"
     var token: String?
 
@@ -54,7 +52,7 @@ final class APIClient {
         return req
     }
 
-    // MARK: - Generic fetch with response body
+    // MARK: - Fetch single object or array
 
     func fetch<T: Decodable>(_ path: String, method: String = "GET", body: (any Encodable)? = nil) async throws -> T {
         let req = try request(path, method: method, body: body)
@@ -65,6 +63,15 @@ final class APIClient {
         } catch {
             throw APIError.decoding(error)
         }
+    }
+
+    // MARK: - Fetch paginated list (Spring Page<T>) → returns content array
+
+    func fetchPage<T: Decodable>(_ path: String, page: Int = 0, size: Int = 100) async throws -> [T] {
+        let separator = path.contains("?") ? "&" : "?"
+        let fullPath = "\(path)\(separator)page=\(page)&size=\(size)"
+        let result: PageResponse<T> = try await fetch(fullPath)
+        return result.content
     }
 
     // MARK: - Send without decoding response

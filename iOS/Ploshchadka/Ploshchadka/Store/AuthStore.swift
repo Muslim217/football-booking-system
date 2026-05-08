@@ -20,13 +20,13 @@ final class AuthStore {
     }
 
     func saveAuth(_ response: AuthResponse) {
-        token    = response.token
+        token    = response.accessToken
         username = response.username
         role     = response.role
-        APIClient.shared.token = response.token
-        UserDefaults.standard.set(response.token,    forKey: "jwt_token")
-        UserDefaults.standard.set(response.username, forKey: "username")
-        UserDefaults.standard.set(response.role,     forKey: "role")
+        APIClient.shared.token = response.accessToken
+        UserDefaults.standard.set(response.accessToken, forKey: "jwt_token")
+        UserDefaults.standard.set(response.username,    forKey: "username")
+        UserDefaults.standard.set(response.role,        forKey: "role")
     }
 
     func logout() {

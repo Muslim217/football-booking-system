@@ -229,7 +229,7 @@ struct FieldDetailView: View {
     }
 
     private func loadBookings() async {
-        guard let b: [Booking] = try? await APIClient.shared.fetch("/bookings/field/\(field.id)") else { return }
+        guard let b: [Booking] = try? await APIClient.shared.fetchPage("/bookings/field/\(field.id)") else { return }
         bookings = b
     }
 

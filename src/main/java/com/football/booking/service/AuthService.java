@@ -49,11 +49,24 @@ public class AuthService {
             throw new IllegalArgumentException("Email уже используется");
         }
 
+        Role role = Role.USER;
+        if (request.getRole() != null && !request.getRole().isBlank()) {
+            String roleUpper = request.getRole().toUpperCase();
+            if ("ADMIN".equals(roleUpper)) {
+                throw new IllegalArgumentException("Недопустимая роль: ADMIN");
+            }
+            try {
+                role = Role.valueOf(roleUpper);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Неизвестная роль: " + request.getRole() + ". Допустимые значения: USER, OWNER");
+            }
+        }
+
         User user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.USER)
+                .role(role)
                 .build();
 
         userRepository.save(user);

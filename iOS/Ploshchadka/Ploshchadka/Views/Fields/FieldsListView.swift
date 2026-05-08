@@ -122,7 +122,7 @@ struct FieldsListView: View {
     private func load() async {
         isLoading = true; errorMessage = nil
         do {
-            fields = try await APIClient.shared.fetch("/fields")
+            fields = try await APIClient.shared.fetchPage("/fields")
         } catch let e as APIError {
             errorMessage = e.errorDescription
         } catch {
