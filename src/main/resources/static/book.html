@@ -1,163 +1,256 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Бронирование — Площадка</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="/css/style.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Бронирование — Площадка</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .book-layout{display:grid;grid-template-columns:1fr 360px;gap:28px;align-items:start}
+    @media(max-width:900px){.book-layout{grid-template-columns:1fr}}
+    .field-hero{
+      background:var(--fb-primary-deep);border-radius:var(--r-lg);
+      height:200px;position:relative;overflow:hidden;margin-bottom:24px
+    }
+    .field-hero::before{content:"";position:absolute;inset:16px;
+      border:2px solid rgba(255,255,255,.3);border-radius:4px}
+    .field-hero::after{content:"";position:absolute;left:50%;top:50%;
+      transform:translate(-50%,-50%);width:70px;height:70px;border-radius:50%;
+      border:2px solid rgba(255,255,255,.3)}
+    .field-hero .center-line{position:absolute;left:50%;top:0;bottom:0;
+      width:2px;background:rgba(255,255,255,.2);transform:translateX(-50%)}
+    .field-hero .field-info{
+      position:absolute;bottom:16px;left:16px;right:16px;
+      background:rgba(14,63,27,.85);backdrop-filter:blur(8px);
+      border-radius:var(--r-sm);padding:12px 16px;
+      display:flex;justify-content:space-between;align-items:center
+    }
+    .field-info h2{color:#fff;font-size:17px;font-weight:700;margin:0}
+    .field-info .price{color:var(--fb-accent);font-family:var(--mono);
+      font-weight:700;font-size:16px;font-variant-numeric:tabular-nums}
+  </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark">
-    <div class="container">
-        <a class="navbar-brand" href="/"><span class="brand-icon">⚽</span> Площадка</a>
-        <div class="collapse navbar-collapse">
-            <ul class="navbar-nav me-auto">
-                <li class="nav-item"><a class="nav-link" href="/">Поля</a></li>
-            </ul>
-            <ul class="navbar-nav" id="nav-auth"></ul>
-        </div>
+<nav class="navbar">
+  <div class="nav-inner">
+    <div class="brand">
+      <div class="brand-mark">⚽</div><span>Площадка</span>
     </div>
+    <div class="nav-links">
+      <a href="/index.html" class="nav-link">Площадки</a>
+      <a href="/bookings.html" class="nav-link">Мои брони</a>
+    </div>
+    <div class="nav-actions">
+      <span id="userBadge" style="font-size:14px;color:var(--fb-text-muted)"></span>
+    </div>
+  </div>
 </nav>
 
-<div class="container content-wrapper">
-    <div class="row">
-        <div class="col-md-5 mb-4">
-            <div class="card">
-                <div class="card-img-top-placeholder" style="height:8px;background:linear-gradient(90deg,var(--pitch-green),var(--pitch-light));"></div>
-                <div class="card-body" id="field-info">
-                    <div class="text-center py-4"><div class="spinner-border text-success"></div></div>
-                </div>
-            </div>
-            <div class="card mt-3">
-                <div class="card-body">
-                    <h6 class="section-title" style="font-size:0.95rem;"><i class="bi bi-clock-history"></i> Занятое время</h6>
-                    <div id="existing-bookings" class="mt-3">
-                        <p class="text-muted small">Загрузка...</p>
-                    </div>
-                </div>
-            </div>
+<div class="page-wrap">
+  <a href="/index.html" class="btn btn-ghost btn-sm" style="margin-bottom:20px">← Назад</a>
+
+  <div class="book-layout">
+    <!-- LEFT: field info -->
+    <div>
+      <div class="field-hero" id="fieldHero">
+        <div class="center-line"></div>
+        <div class="field-info">
+          <h2 id="fieldName">Загрузка…</h2>
+          <span class="price" id="fieldPrice"></span>
         </div>
-        <div class="col-md-7">
-            <div class="card">
-                <div class="card-body" style="padding:2rem;">
-                    <h4 class="section-title mb-4">Забронировать поле</h4>
-                    <div id="alert-container"></div>
-                    <form id="booking-form">
-                        <div class="mb-3">
-                            <label for="startTime" class="form-label">Начало</label>
-                            <input type="datetime-local" class="form-control" id="startTime" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="endTime" class="form-label">Окончание</label>
-                            <input type="datetime-local" class="form-control" id="endTime" required>
-                        </div>
-                        <div class="mb-4 p-3" style="background:var(--pitch-pale);border-radius:var(--radius-sm);">
-                            <label class="form-label mb-1">Расчётная стоимость</label>
-                            <p class="price-tag mb-0" id="estimated-price">—</p>
-                        </div>
-                        <button type="submit" class="btn btn-book w-100">
-                            <i class="bi bi-check-circle"></i> Подтвердить бронирование
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
+      </div>
+      <div style="margin-bottom:16px">
+        <span id="fieldType" class="badge badge-primary"><span class="dot"></span>—</span>
+        <span id="fieldAddr" style="font-size:14px;color:var(--fb-text-muted);margin-left:8px"></span>
+      </div>
+      <p id="fieldDesc" style="font-size:15px;color:var(--fb-text-muted);line-height:1.6"></p>
     </div>
+
+    <!-- RIGHT: schedule panel -->
+    <div class="schedule-panel">
+      <h3>Свободное время</h3>
+
+      <!-- Date strip -->
+      <div class="date-strip" id="dateStrip"></div>
+
+      <!-- Slots -->
+      <div class="slots-grid" id="slotsGrid">
+        <div class="skeleton" style="height:52px;border-radius:8px"></div>
+        <div class="skeleton" style="height:52px;border-radius:8px"></div>
+        <div class="skeleton" style="height:52px;border-radius:8px"></div>
+        <div class="skeleton" style="height:52px;border-radius:8px"></div>
+      </div>
+
+      <!-- Summary -->
+      <div class="slot-summary" id="slotSummary" style="display:none">
+        <div class="row"><span>Время</span><span id="summTime" style="font-weight:600"></span></div>
+        <div class="row"><span>Дата</span><span id="summDate" style="font-weight:600"></span></div>
+        <div class="row" style="margin-bottom:0;padding-top:10px;border-top:1px solid var(--fb-border)">
+          <span style="font-weight:600">Итого</span>
+          <span class="total" id="summTotal"></span>
+        </div>
+      </div>
+
+      <div class="alert alert-danger" id="bookError"></div>
+
+      <button class="btn btn-primary" id="bookBtn" style="width:100%" disabled>
+        Забронировать
+      </button>
+    </div>
+  </div>
 </div>
 
-<footer><div class="container">Площадка &copy; 2026 — Бронирование футбольных полей</div></footer>
+<div class="toast-container" id="toastContainer"></div>
+<div class="pitch-strip"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <h2>Подтвердите бронирование</h2>
+    <p class="modal-sub" id="modalBody"></p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">Отмена</button>
+      <button class="btn btn-primary btn-sm" id="confirmBtn">Подтвердить</button>
+    </div>
+  </div>
+</div>
+
 <script src="/js/api.js"></script>
 <script>
-    const params = new URLSearchParams(window.location.search);
-    const fieldId = params.get('id');
-    let fieldData = null;
+const params   = new URLSearchParams(location.search);
+const fieldId  = params.get('fieldId');
+let field      = null;
+let selectedDate = '';
+let selectedSlot = null;
 
-    if (!fieldId) window.location.href = '/';
-    if (!isLoggedIn()) window.location.href = '/login.html';
-
-    async function loadField() {
-        try {
-            const resp = await fetch(API_BASE + '/fields/' + fieldId);
-            if (!resp.ok) throw new Error();
-            fieldData = await resp.json();
-            document.getElementById('field-info').innerHTML = `
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <h5 class="card-title mb-0">${fieldData.name}</h5>
-                    <span class="field-type-badge ${fieldData.fieldType === 'INDOOR' ? 'indoor' : 'outdoor'}">
-                        ${fieldTypeLabel(fieldData.fieldType)}
-                    </span>
-                </div>
-                <p class="text-muted mb-1"><i class="bi bi-geo-alt-fill"></i> ${fieldData.address}</p>
-                <p class="owner-tag mb-2"><i class="bi bi-person-fill"></i> ${fieldData.ownerUsername || ''}</p>
-                <p class="mb-3">${fieldData.description || ''}</p>
-                <p class="price-tag mb-0">${formatPrice(fieldData.pricePerHour)}<small style="font-size:0.6em;font-weight:400;opacity:0.7">/час</small></p>
-            `;
-        } catch { document.getElementById('field-info').innerHTML = '<div class="alert alert-danger">Поле не найдено</div>'; }
-    }
-
-    async function loadBookings() {
-        try {
-            const resp = await fetch(API_BASE + '/bookings/field/' + fieldId);
-            if (!resp.ok) throw new Error();
-            const bookings = await resp.json();
-            const active = bookings.filter(b => b.status !== 'CANCELLED');
-            const container = document.getElementById('existing-bookings');
-            if (active.length === 0) {
-                container.innerHTML = '<p class="text-muted small mb-0">Свободно — нет бронирований</p>';
-            } else {
-                container.innerHTML = '<ul class="list-group list-group-flush">' +
-                    active.map(b => `<li class="list-group-item px-0 py-2 small border-0" style="border-bottom:1px solid var(--border-light)!important;">
-                        <i class="bi bi-clock" style="color:var(--pitch-green);"></i> ${formatDateTime(b.startTime)} — ${formatDateTime(b.endTime)}
-                    </li>`).join('') + '</ul>';
-            }
-        } catch { document.getElementById('existing-bookings').innerHTML = ''; }
-    }
-
-    function updatePrice() {
-        const start = document.getElementById('startTime').value;
-        const end = document.getElementById('endTime').value;
-        if (start && end && fieldData) {
-            const hours = (new Date(end) - new Date(start)) / 3600000;
-            if (hours > 0) {
-                document.getElementById('estimated-price').textContent = formatPrice((hours * fieldData.pricePerHour).toFixed(2));
-            } else { document.getElementById('estimated-price').textContent = '—'; }
-        }
-    }
-
-    document.getElementById('startTime').addEventListener('change', updatePrice);
-    document.getElementById('endTime').addEventListener('change', updatePrice);
-
-    document.getElementById('booking-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const alertContainer = document.getElementById('alert-container');
-        alertContainer.innerHTML = '';
-        const body = {
-            fieldId: parseInt(fieldId),
-            startTime: document.getElementById('startTime').value + ':00',
-            endTime: document.getElementById('endTime').value + ':00'
-        };
-        try {
-            const resp = await apiFetch('/bookings', { method: 'POST', body: JSON.stringify(body) });
-            if (resp.ok) {
-                alertContainer.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> Бронирование создано. <a href="/bookings.html" style="color:var(--pitch-deep);font-weight:600;">Мои бронирования</a></div>';
-                document.getElementById('booking-form').reset();
-                document.getElementById('estimated-price').textContent = '—';
-                loadBookings();
-            } else {
-                const err = await resp.json();
-                alertContainer.innerHTML = `<div class="alert alert-danger">${err.message || 'Ошибка бронирования'}</div>`;
-            }
-        } catch { alertContainer.innerHTML = '<div class="alert alert-danger">Ошибка соединения</div>'; }
+// --- dates ---
+function buildDates() {
+  const strip = document.getElementById('dateStrip');
+  const days  = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+  const months= ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+  strip.innerHTML = '';
+  for (let i = 0; i < 8; i++) {
+    const d   = new Date(); d.setDate(d.getDate() + i);
+    const iso = d.toISOString().slice(0, 10);
+    const chip = document.createElement('div');
+    chip.className = 'date-chip' + (i === 0 ? ' active' : '');
+    chip.innerHTML = `<span class="day">${days[d.getDay()]}</span><span class="num">${d.getDate()}</span>`;
+    chip.title = `${d.getDate()} ${months[d.getMonth()]}`;
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.date-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      selectedDate = iso;
+      selectedSlot = null;
+      resetSummary();
+      loadSlots();
     });
+    if (i === 0) selectedDate = iso;
+    strip.appendChild(chip);
+  }
+}
 
-    loadField();
-    loadBookings();
+async function loadField() {
+  try {
+    field = await api.get(`/api/fields/${fieldId}`);
+    document.getElementById('fieldName').textContent  = field.name;
+    document.getElementById('fieldPrice').textContent = `${Math.round(field.pricePerHour)} ₽/час`;
+    document.getElementById('fieldAddr').textContent  = field.address + (field.city ? ', ' + field.city : '');
+    document.getElementById('fieldDesc').textContent  = field.description || '';
+    const typeMap = {FOOTBALL:'Футбол',BASKETBALL:'Баскетбол',VOLLEYBALL:'Волейбол',
+      TENNIS:'Теннис',PADEL:'Падел',HOCKEY:'Хоккей',INDOOR:'Крытый',OUTDOOR:'Открытый'};
+    document.getElementById('fieldType').innerHTML =
+      `<span class="dot"></span>${typeMap[field.fieldType] || field.fieldType}`;
+    document.title = `${field.name} — Площадка`;
+  } catch { showToast('Площадка не найдена', 'error'); }
+}
+
+async function loadSlots() {
+  const grid = document.getElementById('slotsGrid');
+  grid.innerHTML = Array(8).fill(`<div class="skeleton" style="height:52px;border-radius:8px"></div>`).join('');
+  try {
+    const slots = await api.get(`/api/fields/${fieldId}/schedule?date=${selectedDate}`);
+    grid.innerHTML = slots.map((s, i) => {
+      const cls = s.available ? 'available' : (new Date(`${selectedDate}T${s.startTime}`) < new Date() ? 'past' : 'booked');
+      return `<div class="slot ${cls}" data-idx="${i}"
+        data-start="${s.startTime}" data-end="${s.endTime}" data-price="${s.price}">
+        ${s.startTime.slice(0,5)}<br><span style="font-size:10px;opacity:.7">${s.endTime.slice(0,5)}</span>
+      </div>`;
+    }).join('');
+
+    grid.querySelectorAll('.slot.available').forEach(el => {
+      el.addEventListener('click', () => {
+        grid.querySelectorAll('.slot.available').forEach(s => s.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedSlot = { start: el.dataset.start, end: el.dataset.end, price: parseFloat(el.dataset.price) };
+        updateSummary();
+      });
+    });
+  } catch { grid.innerHTML = `<p style="color:var(--fb-danger);grid-column:1/-1;font-size:14px">Ошибка загрузки</p>`; }
+}
+
+function updateSummary() {
+  if (!selectedSlot) return;
+  document.getElementById('summTime').textContent  = `${selectedSlot.start.slice(0,5)} – ${selectedSlot.end.slice(0,5)}`;
+  document.getElementById('summDate').textContent  = selectedDate;
+  document.getElementById('summTotal').textContent = `${Math.round(selectedSlot.price)} ₽`;
+  document.getElementById('slotSummary').style.display = 'block';
+  document.getElementById('bookBtn').disabled = false;
+}
+
+function resetSummary() {
+  document.getElementById('slotSummary').style.display = 'none';
+  document.getElementById('bookBtn').disabled = true;
+}
+
+document.getElementById('bookBtn').addEventListener('click', () => {
+  if (!localStorage.getItem('token')) return location.href = '/login.html';
+  document.getElementById('modalBody').textContent =
+    `${field.name} · ${selectedDate} · ${selectedSlot.start.slice(0,5)}–${selectedSlot.end.slice(0,5)} · ${Math.round(selectedSlot.price)} ₽`;
+  document.getElementById('confirmModal').classList.add('open');
+});
+
+document.getElementById('confirmBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('confirmBtn');
+  btn.disabled = true; btn.textContent = 'Бронируем…';
+  document.getElementById('bookError').classList.remove('show');
+  try {
+    await api.post('/api/bookings', {
+      fieldId: parseInt(fieldId),
+      startTime: `${selectedDate}T${selectedSlot.start}`,
+      endTime:   `${selectedDate}T${selectedSlot.end}`
+    });
+    closeModal();
+    showToast('Бронирование подтверждено!', 'success');
+    setTimeout(() => location.href = '/bookings.html', 1500);
+  } catch (e) {
+    closeModal();
+    document.getElementById('bookError').textContent = e.message || 'Ошибка бронирования';
+    document.getElementById('bookError').classList.add('show');
+    btn.disabled = false; btn.textContent = 'Подтвердить';
+  }
+});
+
+function closeModal() {
+  document.getElementById('confirmModal').classList.remove('open');
+  document.getElementById('confirmBtn').disabled = false;
+  document.getElementById('confirmBtn').textContent = 'Подтвердить';
+}
+
+function showToast(msg, type) {
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`; t.textContent = msg;
+  document.getElementById('toastContainer').appendChild(t);
+  setTimeout(() => t.classList.add('show'), 10);
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3000);
+}
+
+const u = localStorage.getItem('username');
+if (u) document.getElementById('userBadge').textContent = u;
+
+buildDates();
+loadField();
+loadSlots();
 </script>
 </body>
 </html>
