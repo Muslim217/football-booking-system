@@ -3,6 +3,10 @@ spring:
     name: football-booking-system
   profiles:
     active: dev
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: non_null
 
 jwt:
   # Dev: захардкоженный секрет (только для разработки!)
