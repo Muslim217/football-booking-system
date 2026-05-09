@@ -14,15 +14,16 @@ struct RegisterRequest: Codable {
     let role: String
 }
 
-// Backend returns accessToken (not token)
 struct AuthResponse: Codable {
     let accessToken: String
     let refreshToken: String?
     let username: String
     let role: String
-
-    // Convenience alias
     var token: String { accessToken }
+}
+
+struct RefreshTokenRequest: Codable {
+    let refreshToken: String
 }
 
 // MARK: - Field
@@ -43,6 +44,18 @@ struct BookingRequest: Codable {
     let endTime: String
 }
 
+// MARK: - User profile
+
+struct UserProfile: Codable {
+    let id: Int64?
+    let username: String
+    let email: String?
+    let fullName: String?
+    let phone: String?
+    let role: String?
+    let createdAt: String?
+}
+
 // MARK: - Generic
 
 struct MessageResponse: Codable {
@@ -55,9 +68,7 @@ struct PageResponse<T: Decodable>: Decodable {
     let content: [T]
     let totalElements: Int
     let totalPages: Int
-    let number: Int      // current page (0-based)
+    let number: Int
     let size: Int
     let last: Bool
-
-    var isLastPage: Bool { last }
 }

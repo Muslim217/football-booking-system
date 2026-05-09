@@ -5,6 +5,7 @@ import com.football.booking.dto.response.BookingResponse;
 import com.football.booking.entity.Booking;
 import com.football.booking.entity.Field;
 import com.football.booking.entity.User;
+import java.util.stream.Collectors;
 import com.football.booking.enums.BookingStatus;
 import com.football.booking.exception.AccessDeniedException;
 import com.football.booking.exception.BookingConflictException;
@@ -115,6 +116,19 @@ public class BookingService {
 
         booking.setStatus(BookingStatus.CANCELLED);
         return mapToResponse(bookingRepository.save(booking));
+    }
+
+    public Page<BookingResponse> getOwnerBookings(Authentication authentication, Pageable pageable) {
+        User owner = getAuthenticatedUser(authentication);
+        List<Field> ownerFields = fieldRepository.findByOwnerId(owner.getId());
+        if (ownerFields.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<Long> fieldIds = ownerFields.stream()
+                .map(Field::getId)
+                .collect(java.util.stream.Collectors.toList());
+        return bookingRepository.findByFieldIdIn(fieldIds, pageable)
+                .map(this::mapToResponse);
     }
 
     public Page<BookingResponse> getBookingsByField(Long fieldId, Pageable pageable) {

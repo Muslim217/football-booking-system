@@ -33,11 +33,7 @@
         <string></string>
     </dict>
 
-    <!-- Требует полноэкранного режима -->
-    <key>UIRequiresFullScreen</key>
-    <true/>
-
-    <key>NSAppTransportSecurity</key>
+<key>NSAppTransportSecurity</key>
     <dict>
         <key>NSAllowsLocalNetworking</key>
         <true/>

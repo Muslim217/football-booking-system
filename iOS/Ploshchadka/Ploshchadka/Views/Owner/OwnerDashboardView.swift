@@ -9,102 +9,109 @@ struct OwnerDashboardView: View {
     @State private var errorMessage: String?
     @State private var successMessage: String?
 
-    private var activeCount: Int { fields.filter { $0.isActive }.count }
+    private var activeCount: Int  { fields.filter { $0.isActive }.count }
     private var bookingCount: Int { allBookings.filter { !$0.isCancelled }.count }
 
     var body: some View {
         ZStack {
             Color.fbBg.ignoresSafeArea()
 
-            ScrollView {
+            if isLoading && fields.isEmpty {
+                ProgressView().tint(Color.fbPrimary)
+            } else if let error = errorMessage, fields.isEmpty {
+                // Error state with retry
                 VStack(spacing: 16) {
-                    // Stats row
-                    HStack(spacing: 12) {
-                        StatCard(label: "Всего полей",  value: "\(fields.count)",  color: .primary)
-                        StatCard(label: "Активных",     value: "\(activeCount)",   color: .fbPrimary)
-                        StatCard(label: "Бронирований", value: "\(bookingCount)",  color: .fbInfo)
-                    }
-
-                    if let msg = errorMessage   { ErrorBanner(message: msg) }
-                    if let msg = successMessage { SuccessBanner(message: msg) }
-
-                    // My fields section
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Text("Мои поля")
-                                .font(.system(size: 17, weight: .bold))
-                                .foregroundColor(.fbText)
-                            Spacer()
-                            Button {
-                                editingField = nil
-                                showFieldForm = true
-                            } label: {
-                                HStack(spacing: 5) {
-                                    Image(systemName: "plus")
-                                    Text("Добавить")
-                                }
-                                .font(.system(size: 13, weight: .semibold))
-                                .padding(.horizontal, 12).padding(.vertical, 7)
-                                .background(Color.fbPrimary)
-                                .foregroundColor(.white)
-                                .cornerRadius(8)
-                            }
-                        }
-
-                        if fields.isEmpty && !isLoading {
-                            VStack(spacing: 12) {
-                                Text("🏟️").font(.system(size: 36))
-                                Text("У вас ещё нет площадок")
-                                    .font(.system(size: 15))
-                                    .foregroundColor(.fbTextMuted)
-                                Button {
-                                    editingField = nil
-                                    showFieldForm = true
-                                } label: {
-                                    Label("Добавить первое поле", systemImage: "plus.circle.fill")
-                                        .font(.system(size: 14, weight: .semibold))
-                                        .foregroundColor(.fbPrimary)
-                                }
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 32)
-                            .background(Color.fbSurface)
-                            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.fbBorder, lineWidth: 1))
-                            .cornerRadius(14)
-                        } else {
-                            VStack(spacing: 10) {
-                                ForEach(fields) { field in
-                                    OwnerFieldRow(
-                                        field: field,
-                                        onEdit: {
-                                            editingField = field
-                                            showFieldForm = true
-                                        },
-                                        onToggle: { Task { await toggle(field) } }
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    // Bookings section
-                    if !allBookings.isEmpty {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Бронирования")
-                                .font(.system(size: 17, weight: .bold))
-                                .foregroundColor(.fbText)
-
-                            VStack(spacing: 10) {
-                                ForEach(allBookings.sorted { $0.startTime > $1.startTime }) { booking in
-                                    OwnerBookingRow(booking: booking)
-                                }
-                            }
-                        }
-                    }
+                    Image(systemName: "wifi.slash").font(.system(size: 40)).foregroundColor(.fbTextFaint)
+                    Text(error).font(.system(size: 15)).foregroundColor(.fbTextMuted).multilineTextAlignment(.center)
+                    Button("Повторить") { Task { await loadData() } }
+                        .font(.system(size: 14, weight: .semibold))
+                        .padding(.horizontal, 18).padding(.vertical, 9)
+                        .background(Color.fbPrimary).foregroundColor(.white).cornerRadius(8)
                 }
-                .padding(16)
+                .padding(24)
+            } else {
+                ScrollView {
+                    VStack(spacing: 16) {
+                        // Stats
+                        HStack(spacing: 12) {
+                            StatCard(label: "Всего полей",  value: "\(fields.count)",  color: .primary)
+                            StatCard(label: "Активных",     value: "\(activeCount)",   color: .fbPrimary)
+                            StatCard(label: "Бронирований", value: "\(bookingCount)",  color: .fbInfo)
+                        }
+
+                        if let msg = successMessage { SuccessBanner(message: msg) }
+                        if let msg = errorMessage   { ErrorBanner(message: msg) }
+
+                        // My fields section
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Text("Мои поля")
+                                    .font(.system(size: 17, weight: .bold)).foregroundColor(.fbText)
+                                Spacer()
+                                Button {
+                                    editingField = nil; showFieldForm = true
+                                } label: {
+                                    HStack(spacing: 5) {
+                                        Image(systemName: "plus")
+                                        Text("Добавить")
+                                    }
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .padding(.horizontal, 12).padding(.vertical, 7)
+                                    .background(Color.fbPrimary).foregroundColor(.white).cornerRadius(8)
+                                }
+                            }
+
+                            if fields.isEmpty {
+                                VStack(spacing: 12) {
+                                    Text("🏟️").font(.system(size: 36))
+                                    Text("У вас ещё нет площадок")
+                                        .font(.system(size: 15)).foregroundColor(.fbTextMuted)
+                                    Button {
+                                        editingField = nil; showFieldForm = true
+                                    } label: {
+                                        Label("Добавить первое поле", systemImage: "plus.circle.fill")
+                                            .font(.system(size: 14, weight: .semibold)).foregroundColor(.fbPrimary)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity).padding(.vertical, 32)
+                                .background(Color.fbSurface)
+                                .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.fbBorder, lineWidth: 1))
+                                .cornerRadius(14)
+                            } else {
+                                VStack(spacing: 10) {
+                                    ForEach(fields) { field in
+                                        OwnerFieldRow(
+                                            field: field,
+                                            onEdit: { editingField = field; showFieldForm = true },
+                                            onToggle: { Task { await toggle(field) } }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // Bookings section
+                        if !allBookings.isEmpty {
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    Text("Бронирования")
+                                        .font(.system(size: 17, weight: .bold)).foregroundColor(.fbText)
+                                    Spacer()
+                                    Text("\(bookingCount) активных")
+                                        .font(.system(size: 12)).foregroundColor(.fbTextMuted)
+                                }
+                                VStack(spacing: 10) {
+                                    ForEach(allBookings.sorted { $0.startTime > $1.startTime }) { booking in
+                                        OwnerBookingRow(booking: booking)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .padding(16)
+                }
+                .refreshable { await loadData() }
             }
-            .refreshable { await loadData() }
         }
         .navigationTitle("Мои поля")
         .task { await loadData() }
@@ -116,14 +123,10 @@ struct OwnerDashboardView: View {
     private func loadData() async {
         isLoading = true; errorMessage = nil
         do {
-            fields = try await APIClient.shared.fetch("/fields/my")
-            var bookings: [Booking] = []
-            for f in fields {
-                if let b: [Booking] = try? await APIClient.shared.fetch("/bookings/field/\(f.id)") {
-                    bookings.append(contentsOf: b)
-                }
-            }
-            allBookings = bookings
+            async let fieldsTask: [Field]   = APIClient.shared.fetchPage("/fields/my")
+            async let bookingsTask: [Booking] = APIClient.shared.fetchPage("/bookings/owner")
+            fields      = try await fieldsTask
+            allBookings = try await bookingsTask
         } catch let e as APIError {
             errorMessage = e.errorDescription
         } catch {
@@ -136,7 +139,7 @@ struct OwnerDashboardView: View {
         errorMessage = nil
         do {
             if field.isActive {
-                try await APIClient.shared.send("/fields/\(field.id)", method: "DELETE")
+                try await APIClient.shared.send("/fields/\(field.id)/deactivate", method: "PUT")
                 flash(success: "Поле деактивировано")
             } else {
                 try await APIClient.shared.send("/fields/\(field.id)/activate", method: "PUT")
@@ -171,9 +174,7 @@ private struct OwnerFieldRow: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(field.name)
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(.fbText)
+                    Text(field.name).font(.system(size: 15, weight: .bold)).foregroundColor(.fbText)
                     HStack(spacing: 4) {
                         Image(systemName: "location.fill").font(.system(size: 11)).foregroundColor(.fbTextFaint)
                         Text(field.address).font(.system(size: 13)).foregroundColor(.fbTextMuted)
@@ -181,9 +182,7 @@ private struct OwnerFieldRow: View {
                 }
                 Spacer()
                 HStack(spacing: 5) {
-                    Circle()
-                        .fill(field.isActive ? Color.fbPrimary : Color.fbTextFaint)
-                        .frame(width: 6, height: 6)
+                    Circle().fill(field.isActive ? Color.fbPrimary : Color.fbTextFaint).frame(width: 6, height: 6)
                     Text(field.isActive ? "Активно" : "Неактивно")
                         .font(.system(size: 12, weight: .semibold))
                 }
@@ -195,19 +194,16 @@ private struct OwnerFieldRow: View {
 
             HStack(spacing: 8) {
                 Text(field.formattedPrice)
-                    .font(.system(size: 13, weight: .semibold, design: .monospaced))
-                    .foregroundColor(.fbText)
+                    .font(.system(size: 13, weight: .semibold, design: .monospaced)).foregroundColor(.fbText)
                 FieldTypeBadge(fieldType: field.fieldType)
                 Spacer()
                 Button(action: onEdit) {
                     HStack(spacing: 4) {
-                        Image(systemName: "pencil")
-                        Text("Изменить")
+                        Image(systemName: "pencil"); Text("Изменить")
                     }
                     .font(.system(size: 12, weight: .semibold))
                     .padding(.horizontal, 10).padding(.vertical, 6)
-                    .background(Color.fbInfoSoft)
-                    .foregroundColor(.fbInfo)
+                    .background(Color.fbInfoSoft).foregroundColor(.fbInfo)
                     .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.fbInfo.opacity(0.3), lineWidth: 1))
                     .cornerRadius(8)
                 }
@@ -240,9 +236,7 @@ private struct OwnerBookingRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text(booking.fieldName)
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.fbText)
+                Text(booking.fieldName).font(.system(size: 14, weight: .bold)).foregroundColor(.fbText)
                 Spacer()
                 StatusBadge(status: booking.status)
             }
@@ -251,14 +245,10 @@ private struct OwnerBookingRow: View {
                 Text(booking.username).font(.system(size: 13)).foregroundColor(.fbTextMuted)
             }
             Text("\(booking.startTime.toShortDateTime()) — \(booking.endTime.toShortDateTime())")
-                .font(.system(size: 12, design: .monospaced))
-                .foregroundColor(.fbTextMuted)
-
+                .font(.system(size: 12, design: .monospaced)).foregroundColor(.fbTextMuted)
             Divider().background(Color.fbBorder)
-
             Text("\(Int(booking.totalPrice)) ₽")
-                .font(.system(size: 15, weight: .bold, design: .monospaced))
-                .foregroundColor(.fbText)
+                .font(.system(size: 15, weight: .bold, design: .monospaced)).foregroundColor(.fbText)
         }
         .padding(16)
         .background(Color.fbSurface)

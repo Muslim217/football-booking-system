@@ -28,7 +28,6 @@ struct RegisterView: View {
                             startPoint: .topLeading, endPoint: .bottomTrailing
                         )
                         .ignoresSafeArea(edges: .top)
-
                         ZStack {
                             RoundedRectangle(cornerRadius: 6)
                                 .strokeBorder(Color.white.opacity(0.1), lineWidth: 2)
@@ -37,7 +36,6 @@ struct RegisterView: View {
                                 .strokeBorder(Color.white.opacity(0.1), lineWidth: 2)
                                 .frame(width: 80, height: 80)
                         }
-
                         VStack(spacing: 10) {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 14)
@@ -47,8 +45,7 @@ struct RegisterView: View {
                                 Text("⚽").font(.system(size: 24))
                             }
                             Text("Площадка")
-                                .font(.system(size: 20, weight: .bold))
-                                .foregroundColor(.white)
+                                .font(.system(size: 20, weight: .bold)).foregroundColor(.white)
                         }
                     }
                     .frame(height: 170)
@@ -56,34 +53,25 @@ struct RegisterView: View {
                     // ── Form ──────────────────────────────────────
                     VStack(alignment: .leading, spacing: 0) {
                         Text("Регистрация")
-                            .font(.system(size: 26, weight: .bold))
-                            .foregroundColor(.fbText)
-                            .padding(.top, 28)
-                            .padding(.bottom, 6)
-
+                            .font(.system(size: 26, weight: .bold)).foregroundColor(.fbText)
+                            .padding(.top, 28).padding(.bottom, 6)
                         Text("Заполните данные для создания аккаунта")
-                            .font(.system(size: 15))
-                            .foregroundColor(.fbTextMuted)
+                            .font(.system(size: 15)).foregroundColor(.fbTextMuted)
                             .padding(.bottom, 24)
 
                         FormField(label: "Имя пользователя", placeholder: "username", text: $username)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
+                            .textInputAutocapitalization(.never).autocorrectionDisabled()
                             .padding(.bottom, 16)
-
                         FormField(label: "Email", placeholder: "you@example.com",
                                   text: $email, keyboardType: .emailAddress)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
+                            .textInputAutocapitalization(.never).autocorrectionDisabled()
                             .padding(.bottom, 16)
-
                         FormSecureField(label: "Пароль", placeholder: "Минимум 6 символов", text: $password)
                             .padding(.bottom, 20)
 
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Я регистрируюсь как")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(.fbText)
+                                .font(.system(size: 13, weight: .semibold)).foregroundColor(.fbText)
                             HStack(spacing: 10) {
                                 RoleCard(title: "Клиент",   subtitle: "Бронировать поля",
                                          icon: "person.fill",     value: "USER",  selected: $selectedRole)
@@ -93,25 +81,20 @@ struct RegisterView: View {
                         }
                         .padding(.bottom, 24)
 
-                        if let error = errorMessage {
-                            ErrorBanner(message: error).padding(.bottom, 16)
-                        }
+                        if let error = errorMessage { ErrorBanner(message: error).padding(.bottom, 16) }
 
                         PrimaryButton(title: "Создать аккаунт", isLoading: isLoading) {
                             Task { await register() }
                         }
-                        .opacity(canSubmit ? 1 : 0.45)
-                        .disabled(!canSubmit)
+                        .opacity(canSubmit ? 1 : 0.45).disabled(!canSubmit)
 
                         Divider().background(Color.fbBorder).padding(.vertical, 24)
 
                         HStack(spacing: 4) {
                             Text("Уже есть аккаунт?")
-                                .font(.system(size: 14))
-                                .foregroundColor(.fbTextMuted)
+                                .font(.system(size: 14)).foregroundColor(.fbTextMuted)
                             Button("Войдите") { dismiss() }
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.fbPrimary)
+                                .font(.system(size: 14, weight: .semibold)).foregroundColor(.fbPrimary)
                         }
                         .frame(maxWidth: .infinity, alignment: .center)
                         .padding(.bottom, 80)
@@ -122,7 +105,6 @@ struct RegisterView: View {
                 }
             }
             .ignoresSafeArea(edges: .top)
-
             PitchStrip()
         }
         .ignoresSafeArea(edges: .bottom)
@@ -130,20 +112,40 @@ struct RegisterView: View {
     }
 
     private func register() async {
-        isLoading = true
-        errorMessage = nil
+        isLoading = true; errorMessage = nil
         do {
+            // Backend now returns AuthResponse directly on register
             let response: AuthResponse = try await APIClient.shared.fetch(
                 "/auth/register", method: "POST",
-                body: RegisterRequest(username: username, email: email, password: password, role: selectedRole)
+                body: RegisterRequest(username: username, email: email,
+                                      password: password, role: selectedRole)
+            )
+            authStore.saveAuth(response)
+        } catch let error as APIError {
+            // Fallback: if backend returns MessageResponse (old version), try login manually
+            if case .decoding = error {
+                await loginAfterRegister()
+            } else {
+                errorMessage = error.errorDescription
+            }
+        } catch {
+            errorMessage = "Ошибка соединения с сервером"
+        }
+        isLoading = false
+    }
+
+    private func loginAfterRegister() async {
+        do {
+            let response: AuthResponse = try await APIClient.shared.fetch(
+                "/auth/login", method: "POST",
+                body: LoginRequest(username: username, password: password)
             )
             authStore.saveAuth(response)
         } catch let error as APIError {
             errorMessage = error.errorDescription
         } catch {
-            errorMessage = "Ошибка соединения с сервером"
+            errorMessage = "Зарегистрировано, но не удалось войти автоматически"
         }
-        isLoading = false
     }
 }
 
@@ -155,32 +157,23 @@ private struct RoleCard: View {
     let icon: String
     let value: String
     @Binding var selected: String
-
     private var isSelected: Bool { selected == value }
 
     var body: some View {
         Button { selected = value } label: {
             VStack(alignment: .leading, spacing: 8) {
-                Image(systemName: icon)
-                    .font(.system(size: 18))
+                Image(systemName: icon).font(.system(size: 18))
                     .foregroundColor(isSelected ? .fbPrimary : .fbTextMuted)
-                Text(title)
-                    .font(.system(size: 14, weight: .semibold))
+                Text(title).font(.system(size: 14, weight: .semibold))
                     .foregroundColor(isSelected ? .fbText : .fbTextMuted)
-                Text(subtitle)
-                    .font(.system(size: 12))
-                    .foregroundColor(.fbTextMuted)
+                Text(subtitle).font(.system(size: 12)).foregroundColor(.fbTextMuted)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(14)
             .background(isSelected ? Color.fbPrimarySoft : Color.fbBg)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .strokeBorder(
-                        isSelected ? Color.fbPrimary : Color.fbBorder,
-                        lineWidth: isSelected ? 2 : 1
-                    )
-            )
+            .overlay(RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(isSelected ? Color.fbPrimary : Color.fbBorder,
+                              lineWidth: isSelected ? 2 : 1))
             .cornerRadius(12)
         }
         .buttonStyle(.plain)

@@ -6,16 +6,25 @@ struct MyBookingsView: View {
     @State private var errorMessage: String?
     @State private var activeTab = 0  // 0 = Предстоящие, 1 = Прошедшие
 
+    private static let dateFmt: DateFormatter = {
+        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"; return f
+    }()
+
+    private func endDate(_ b: Booking) -> Date {
+        Self.dateFmt.date(from: b.endTime) ?? .distantPast
+    }
+    private func startDate(_ b: Booking) -> Date {
+        Self.dateFmt.date(from: b.startTime) ?? .distantPast
+    }
+
     private var upcoming: [Booking] {
-        bookings.filter { !$0.isCancelled && $0.endTime >= nowString() }
-            .sorted { $0.startTime < $1.startTime }
+        bookings.filter { !$0.isCancelled && endDate($0) >= Date() }
+            .sorted { startDate($0) < startDate($1) }
     }
-
     private var past: [Booking] {
-        bookings.filter { $0.isCancelled || $0.endTime < nowString() }
-            .sorted { $0.startTime > $1.startTime }
+        bookings.filter { $0.isCancelled || endDate($0) < Date() }
+            .sorted { startDate($0) > startDate($1) }
     }
-
     private var shown: [Booking] { activeTab == 0 ? upcoming : past }
 
     var body: some View {
@@ -97,11 +106,6 @@ struct MyBookingsView: View {
         }
         .navigationTitle("Мои бронирования")
         .task { await load() }
-    }
-
-    private func nowString() -> String {
-        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
-        return f.string(from: Date())
     }
 
     private func load() async {

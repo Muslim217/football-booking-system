@@ -102,6 +102,7 @@ public class FieldService {
 
         List<TimeSlotResponse> slots = new ArrayList<>();
         LocalTime cursor = OPEN_TIME;
+        LocalDateTime now = LocalDateTime.now();
 
         while (cursor.isBefore(CLOSE_TIME)) {
             LocalTime slotEnd = cursor.plusHours(1);
@@ -113,7 +114,7 @@ public class FieldService {
                     b.getEndTime().isAfter(slotStart_dt));
 
             // Прошедшие слоты тоже недоступны
-            boolean isPast = slotStart_dt.isBefore(LocalDateTime.now());
+            boolean isPast = slotStart_dt.isBefore(now);
 
             BigDecimal slotPrice = field.getPricePerHour()
                     .setScale(2, RoundingMode.HALF_UP);

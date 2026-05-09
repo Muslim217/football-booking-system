@@ -4,7 +4,7 @@ import com.football.booking.dto.request.LoginRequest;
 import com.football.booking.dto.request.RefreshTokenRequest;
 import com.football.booking.dto.request.RegisterRequest;
 import com.football.booking.dto.response.AuthResponse;
-import com.football.booking.dto.response.MessageResponse;
+import com.football.booking.dto.response.MessageResponse; // used by login/logout
 import com.football.booking.entity.RefreshToken;
 import com.football.booking.entity.User;
 import com.football.booking.enums.Role;
@@ -41,7 +41,7 @@ public class AuthService {
     private long refreshExpirationMs;
 
     @Transactional
-    public MessageResponse register(RegisterRequest request) {
+    public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new IllegalArgumentException("Пользователь с таким именем уже существует");
         }
@@ -69,8 +69,19 @@ public class AuthService {
                 .role(role)
                 .build();
 
-        userRepository.save(user);
-        return new MessageResponse("Пользователь успешно зарегистрирован");
+        user = userRepository.save(user);
+
+        String accessToken  = jwtTokenProvider.generateAccessToken(user.getUsername());
+        String refreshToken = createRefreshToken(user);
+
+        return AuthResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .tokenType("Bearer")
+                .expiresIn(jwtExpirationMs / 1000)
+                .username(user.getUsername())
+                .role(user.getRole().name())
+                .build();
     }
 
     @Transactional

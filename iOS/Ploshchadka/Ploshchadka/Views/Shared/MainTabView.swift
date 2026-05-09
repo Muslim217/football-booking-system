@@ -8,34 +8,25 @@ struct MainTabView: View {
             NavigationStack {
                 FieldsListView()
             }
-            .tabItem {
-                Label("Площадки", systemImage: "sportscourt.fill")
-            }
+            .tabItem { Label("Площадки", systemImage: "sportscourt.fill") }
 
-            if authStore.isOwner {
+            if authStore.isOwner || authStore.isAdmin {
                 NavigationStack {
                     OwnerDashboardView()
                 }
-                .tabItem {
-                    Label("Мои поля", systemImage: "building.2.fill")
-                }
+                .tabItem { Label("Мои поля", systemImage: "building.2.fill") }
             }
 
-            if authStore.isUser || authStore.isAdmin {
-                NavigationStack {
-                    MyBookingsView()
-                }
-                .tabItem {
-                    Label("Брони", systemImage: "calendar.badge.clock")
-                }
+            // All logged-in users can have bookings
+            NavigationStack {
+                MyBookingsView()
             }
+            .tabItem { Label("Брони", systemImage: "calendar.badge.clock") }
 
             NavigationStack {
                 ProfileView()
             }
-            .tabItem {
-                Label("Профиль", systemImage: "person.circle.fill")
-            }
+            .tabItem { Label("Профиль", systemImage: "person.circle.fill") }
         }
         .tint(Color.fbPrimary)
     }
